@@ -17,7 +17,7 @@ Currently, the metric we use is the: KL Divergence.
 
 class CNet(nn.Module):
     def __init__(self, num_qubits):
-        super(CNet, self).__init__()
+        super(CNet, self).__init__() # initialize torch nn
         self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
         self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
         self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
@@ -27,6 +27,7 @@ class CNet(nn.Module):
         self.batch_size = 100
         self.loss_func = nn.MSELoss()
         self.num_qubits = num_qubits
+        print("Classical deep net initialized.")
     
     def forward(self, param):
         x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization

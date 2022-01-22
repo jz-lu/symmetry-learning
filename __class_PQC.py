@@ -20,13 +20,20 @@ This class is static in the HQNet scheme, in the sense that we perform optimizat
 parameter space, not the circuit architecture itself. That is, the map param -> circuit
 is fixed; we simply want to find the parameter `param*` that produces a circuit leaving the
 desired pristine state invariant, thereby finding a symmetry of the pristine state.
+
+`metric_func`: choice of loss metric. Many others are available in `__loss_funcs.py`. 
+Defaults to KL divergence.
 """
 
 class PQC:
-    def __init__(self, state, basis_param):
-        self.metric = KL #* change this if the metric changes
-        self.state = BasisTransformer([state], basis_param).transformed_states[0]
+    def __init__(self, state, basis_param=None, metric_func=KL):
+        self.metric = metric_func
+        if basis_param is None:
+            self.state = state
+        else:
+            self.state = BasisTransformer([state], basis_param).transformed_states[0]
         self.L = state.num_qubits
+        print("Parametrized quantum circuit initialized.")
         
     def __Q_th(self, p):
         """
@@ -52,9 +59,15 @@ class PQC:
         """
         return self.metric(self.state.probabilities(), self.__Q_th(p).probabilities())
     
-    def states_from_rand_params(self, sz):
+    def true_metric_on_params(self, p_list):
+        """Same as `evaluate_true_metric` but over a list of parameters"""
+        assert len(p_list) > 0, "Parameter list empty"
+        return [self.evaluate_true_metric(p) for p in p_list]
+    
+    def gen_rand_data(self, sz):
         """
-        Generate `sz` random input parameters, which inputs into the CNet, 
+        Generate `sz` random input parameters (just one axis rotation for now), 
+        which inputs into the CNet, 
         sampled from X ~ 2 * Pi * DUnif(n), whwere n = SAMPLING_DENSITY.
         """
         dataset = t.zeros(sz, 3*self.L + 1) # + 1 for the output value
@@ -69,6 +82,6 @@ class PQC:
         Generate the train and test datasets for neural network training.
         A convenience function mostly for unit-testing the CNet.
         """
-        train_data = self.states_from_rand_params(train_size)
-        test_data = self.states_from_rand_params(test_size)
+        train_data = self.gen_rand_data(train_size)
+        test_data = self.gen_rand_data(test_size)
         return train_data, test_data
