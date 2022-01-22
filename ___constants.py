@@ -1,0 +1,4 @@
+# * HQNet constants
+
+CNET_TRAIN_SIZE = 3000
+CNET_TEST_SIZE = 500
