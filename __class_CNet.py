@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 import random
 import numpy as np
+from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM
 
 """
 The CNet component of the HQ Net. 
@@ -13,36 +14,35 @@ Implementation followed from: https://pyt.org/tutorials/beginner/blitz/neural_ne
 
 Currently, the metric we use is the: KL Divergence.
 """
-CNET_HIDDEN_DIM = 100
-CNET_CONV_NCHAN = 4
-def my_loss(x):
-    return x * t.pow(t.sin(x), 2)
 
 class CNet(nn.Module):
     def __init__(self, num_qubits):
         super(CNet, self).__init__()
         self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
         self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
-        self.linear1 = nn.Linear(12, CNET_HIDDEN_DIM)
+        self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
         self.linear2 = nn.Linear(CNET_HIDDEN_DIM, CNET_HIDDEN_DIM)
         self.linear3 = nn.Linear(CNET_HIDDEN_DIM, 1)
         self.model = self # hack
         self.batch_size = 100
         self.loss_func = nn.MSELoss()
+        self.num_qubits = num_qubits
     
     def forward(self, param):
-        x = param.view(-1, 3, 3)
-        x = t.unsqueeze(x, 1)
+        x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization
+        x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
-        x = x.view(-1, 12)
+        x = x.view(-1, CNET_CONV_NCHAN * self.num_qubits)
         x = F.leaky_relu(self.linear1(x))
         x = F.leaky_relu(self.linear2(x))
         x = F.leaky_relu(self.linear3(x))
         return x
     
     def train(self, train_data, nepoch=2000, eta=1e-2, loss_window=10):
-        """Train the net with learning rate `eta` for `nepochs` epochs"""
+        """
+        Train the net with learning rate `eta` for `nepochs` epochs.
+        """
         true_metric = train_data[:,-1] # True metric value
         sz = train_data.size(0)
         self.optimizer = t.optim.Adam(self.model.parameters(), lr=eta)
@@ -75,3 +75,16 @@ class CNet(nn.Module):
         estimated_metric = self.model(test_data[:,:-1]).squeeze()
         true_metric = test_data[:,-1]
         return self.loss_func(estimated_metric, true_metric)
+
+    def run(self, data):
+        """Run the CNet on a dataset and return the estimated metric"""
+        return self.model(data)
+    
+    def run_then_train(self, data, nepoch=2000, eta=1e-2, loss_window=10):
+        """
+        First evaluate the data using the network, then train it. 
+        Used for QNet-CNet interaction in the HQNet training scheme.
+        Returns: (estimated metric, training loss)
+        """
+        assert len(data.shape == 2)
+        return self.run(data[:,:-1]), self.train(data, nepoch=nepoch, eta=eta, loss_window=loss_window)
