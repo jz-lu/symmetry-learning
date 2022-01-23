@@ -39,8 +39,22 @@ class CNet(nn.Module):
         x = F.leaky_relu(self.linear2(x))
         x = F.leaky_relu(self.linear3(x))
         return x
+
+    def train_SGD(self, datum, eta=1e-2):
+        """
+        Train the network with a single datum rather than a batch over epochs.
+        Confusingly, SGD here stands for singleton gradient descent; nothing is
+        stochastic in this process, as `datum` is provided to us by some algorithm.
+        """
+        true_metric = datum[-1]
+        self.optimizer.zero_grad()
+        estimated_metric = self.model(datum[:-1]).squeeze()
+        loss = self.loss_func(estimated_metric, true_metric)
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
     
-    def train(self, train_data, nepoch=2000, eta=1e-2, loss_window=10):
+    def train(self, train_data, nepoch=2000, eta=1e-2, loss_window=10, print_log=False):
         """
         Train the net with learning rate `eta` for `nepochs` epochs.
         """
@@ -49,7 +63,8 @@ class CNet(nn.Module):
         self.optimizer = t.optim.Adam(self.model.parameters(), lr=eta)
         self.losses = np.zeros(nepoch // loss_window)
         local_losses = [0] * loss_window
-        print("Training", flush=True, end='')
+        if print_log:
+            print("Training", flush=True, end='')
         
         for epoch in range(nepoch):
             self.optimizer.zero_grad()
@@ -66,9 +81,10 @@ class CNet(nn.Module):
                 local_losses[epoch % loss_window] = loss.item()
             loss.backward()
             self.optimizer.step()
-            if epoch % 1000 == 0:
+            if epoch % 1000 == 0 and print_log:
                 print('.', end='', flush=True)
-        print("") # newline
+        if print_log:
+            print("") # newline
         return self.losses
     
     def test(self, test_data):
@@ -83,9 +99,17 @@ class CNet(nn.Module):
     
     def run_then_train(self, data, nepoch=2000, eta=1e-2, loss_window=10):
         """
-        First evaluate the data using the network, then train it. 
+        First evaluate the batch of data using the network, then train it. 
         Used for QNet-CNet interaction in the HQNet training scheme.
-        Returns: (estimated metric, training loss)
+        Returns: (estimated metric, training loss).
         """
         assert len(data.shape == 2)
         return self.run(data[:,:-1]), self.train(data, nepoch=nepoch, eta=eta, loss_window=loss_window)
+    
+    def run_then_train_SGD(self, datum):
+        """
+        First evaluate the data using the network on a single datum, then
+        train it using `train_SGD`.
+        """
+        assert len(datum.shape == 1)
+        return self.run(datum[:-1]), self.train_SGD(datum)

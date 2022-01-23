@@ -40,6 +40,7 @@ class PQC:
         Apply the quantum circuit in qiskit corresponding to Q_theta with parameters p.
         For the moment, it is also just a bunch of single-qubit rotations.
         This will eventually change to a richer parametrization of circuits.
+        * Parametrization-dependent function!
         """
         qubits = QuantumRegister(self.L)
         Q_th = QuantumCircuit(qubits)
@@ -64,17 +65,21 @@ class PQC:
         assert len(p_list) > 0, "Parameter list empty"
         return [self.evaluate_true_metric(p) for p in p_list]
     
-    def gen_rand_data(self, sz):
+    def gen_rand_data(self, sz, include_metric=True):
         """
         Generate `sz` random input parameters (just one axis rotation for now), 
         which inputs into the CNet, 
         sampled from X ~ 2 * Pi * DUnif(n), whwere n = SAMPLING_DENSITY.
+        * Parametrization-dependent function!
         """
-        dataset = t.zeros(sz, 3*self.L + 1) # + 1 for the output value
-        params = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
-        dataset[:,:-1] = params # the last column of the dataset stores the output loss metric
-        true_metric = t.tensor([self.evaluate_true_metric(param) for param in params]) # target value for CNet
-        dataset[:,-1] = true_metric
+        if include_metric:
+            dataset = t.zeros(sz, 3*self.L + 1)
+            params = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
+            dataset[:,:-1] = params # the last column of the dataset stores the output loss metric
+            true_metric = t.tensor([self.evaluate_true_metric(param) for param in params]) # target value for CNet
+            dataset[:,-1] = true_metric
+        else:
+            dataset = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
         return dataset
   
     def generate_train_test(self, train_size=CNET_TRAIN_SIZE, test_size=CNET_TEST_SIZE):
