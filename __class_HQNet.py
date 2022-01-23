@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize as nelder_mead
+import torch.nn as nn
 from math import pi
 from __loss_funcs import KL
 from __class_CNet import CNet
@@ -12,11 +13,12 @@ of a given quantum state. It combines a parametrized quantum circuit (PQC)
 and a classical deep network (CNet), which learns to estimate the loss within 
 the HQNet to regularize against finding known symmetries.
 
-Current parameter-space optimization algorithm: Nelder-Mead simplex search.
+Currently built to perform either gradient descent (mode=gd) or Nelder-Mead
+simplex search (mode=nm).
 """
-HQN_BATCH_SIZE = 50
-class HQNet:
-    def __init__(self, state, bases, metric_func=KL):
+
+class HQNet(nn.Module):
+    def __init__(self, state, bases, metric_func=KL, mode='gd'):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -35,6 +37,19 @@ class HQNet:
         self.regularizer_transform = lambda x: 0.5 * x # transformation to estimated metric
         self.qloss = lambda x: x[1] - self.regularizer_transform(x[0])
         self.num_bases = len(bases)
+        self.mode = mode
+        
+        # Initialize gd neural network
+        super(CNet, self).__init__() # initialize torch nn
+        self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
+        self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
+        self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
+        self.linear2 = nn.Linear(CNET_HIDDEN_DIM, CNET_HIDDEN_DIM)
+        self.linear3 = nn.Linear(CNET_HIDDEN_DIM, 1)
+        self.model = self # hack
+        self.batch_size = 100
+        self.loss_func = nn.MSELoss()
+        
         print("Hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
@@ -77,9 +92,8 @@ class HQNet:
         
         ? Open question: will the CNet performance get worse when the batch is 
         ? a local path in the space, not a randomly sampled set of parameters?
-        ? If so, how can we resolve this? Note that a pre-training phase interefers
-        ? with our proof of regularizability. Perhaps we can improve the CNet by using
-        ? a RNN or LSTM layer?
+        ? (We want it to still be able to interpolate very well, but we DON'T 
+        ? want it to extrapolate well. That's the point of regularizing.)
         
         * The `bounds` variable is parametrization-dependent!
         """

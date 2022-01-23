@@ -1,5 +1,4 @@
 from __loss_funcs import KL
-from __class_BasisTransformer import BasisTransformer
 from qiskit import QuantumRegister, QuantumCircuit
 import numpy as np
 import torch as t
@@ -28,11 +27,13 @@ Defaults to KL divergence.
 class PQC:
     def __init__(self, state, basis_param=None, metric_func=KL):
         self.metric = metric_func
-        if basis_param is None:
-            self.state = state
-        else:
-            self.state = BasisTransformer([state], basis_param).transformed_states[0]
+        self.state = state
         self.L = state.num_qubits
+        if type(basis_param).__module__ == t.__name__:
+            self.bp = basis_param.clone().cpu().detach().numpy()
+        elif type(basis_param).__module__ == np.__name__:
+            self.bp = basis_param
+        self.bp = -self.bp # *= -1 since measurement ~= inverted rotation
         print("Parametrized quantum circuit initialized.")
         
     def __Q_th(self, p):
@@ -49,8 +50,14 @@ class PQC:
         if type(p).__module__ == t.__name__:
             p = p.clone().cpu().detach().numpy()
         
+        # Quantum parametrization -- DYNAMIC (change based on circuit param)
         for i in range(self.L):
             Q_th.u(*p[i], qubits[i])
+        
+        # Measurement in the basis -- STATIC (do not change regardless of parametrization)
+        for i in range(self.L):
+            Q_th.u(*self.bp[i], qubits[i])
+        
         return self.state.copy().evolve(Q_th)
         
     def evaluate_true_metric(self, p):
@@ -65,7 +72,7 @@ class PQC:
         assert len(p_list) > 0, "Parameter list empty"
         return [self.evaluate_true_metric(p) for p in p_list]
     
-    def gen_rand_data(self, sz, include_metric=True):
+    def gen_rand_data(self, sz, include_metric=True, localize=False):
         """
         Generate `sz` random input parameters (just one axis rotation for now), 
         which inputs into the CNet, 
@@ -75,18 +82,20 @@ class PQC:
         if include_metric:
             dataset = t.zeros(sz, 3*self.L + 1)
             params = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
+            if localize:
+                params[:,7:] = 0
             dataset[:,:-1] = params # the last column of the dataset stores the output loss metric
             true_metric = t.tensor([self.evaluate_true_metric(param) for param in params]) # target value for CNet
             dataset[:,-1] = true_metric
         else:
             dataset = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
         return dataset
-  
+
     def generate_train_test(self, train_size=CNET_TRAIN_SIZE, test_size=CNET_TEST_SIZE):
         """
         Generate the train and test datasets for neural network training.
         A convenience function mostly for unit-testing the CNet.
         """
-        train_data = self.gen_rand_data(train_size)
+        train_data = self.gen_rand_data(train_size, localize=False) # localize is a debugging parameter
         test_data = self.gen_rand_data(test_size)
         return train_data, test_data

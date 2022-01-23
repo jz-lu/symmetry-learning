@@ -29,6 +29,7 @@ class BasisTransformer:
         else:
             assert type(updated_parameters).__module__ == np.__name__
             self.p = updated_parameters
+        self.p = -self.p # *= -1 since measurement ~= inverted rotation
         self.__transform()
     
     def __make_qc(self):
