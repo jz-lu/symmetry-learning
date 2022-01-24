@@ -30,6 +30,10 @@ class CNet(nn.Module):
         print("Classical deep net initialized.")
     
     def forward(self, param):
+        """
+        * Parametrization-dependent function.
+        """
+        print(param)
         x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization
         x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
@@ -46,6 +50,7 @@ class CNet(nn.Module):
         Confusingly, SGD here stands for singleton gradient descent; nothing is
         stochastic in this process, as `datum` is provided to us by some algorithm.
         """
+        self.optimizer = t.optim.Adam(self.model.parameters(), lr=eta)
         true_metric = datum[-1]
         self.optimizer.zero_grad()
         estimated_metric = self.model(datum[:-1]).squeeze()
@@ -111,5 +116,6 @@ class CNet(nn.Module):
         First evaluate the data using the network on a single datum, then
         train it using `train_SGD`.
         """
-        assert len(datum.shape == 1)
+        print(f"datum:\n", datum)
+        assert len(datum.shape) == 1
         return self.run(datum[:-1]), self.train_SGD(datum)

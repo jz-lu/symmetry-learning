@@ -1,6 +1,7 @@
 import numpy as np
-from scipy.optimize import minimize as nelder_mead
+from scipy.optimize import minimize
 import torch.nn as nn
+import torch as t
 from math import pi
 from __loss_funcs import KL
 from __class_CNet import CNet
@@ -17,8 +18,8 @@ Currently built to perform either gradient descent (mode=gd) or Nelder-Mead
 simplex search (mode=nm).
 """
 
-class HQNet(nn.Module):
-    def __init__(self, state, bases, metric_func=KL, mode='gd'):
+class HQNet:
+    def __init__(self, state, bases, metric_func=KL, mode='nm'):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -39,40 +40,33 @@ class HQNet(nn.Module):
         self.num_bases = len(bases)
         self.mode = mode
         
-        # Initialize gd neural network
-        super(CNet, self).__init__() # initialize torch nn
-        self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
-        self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
-        self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
-        self.linear2 = nn.Linear(CNET_HIDDEN_DIM, CNET_HIDDEN_DIM)
-        self.linear3 = nn.Linear(CNET_HIDDEN_DIM, 1)
-        self.model = self # hack
-        self.batch_size = 100
-        self.loss_func = nn.MSELoss()
-        
         print("Hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
         """
-        The classical loss tensor is of order 3: (num bases, batch size, 2)
+        The classical loss tensor is of order 3: (num bases, 2)
         where the last index are pairs (true metric, estimated metric). The 
         quantum loss metric takes a positive monotonic map over the estimated metric,
         then takes its difference with the true metric. It then sums over the bases.
         """
         return np.sum(np.apply_along_axis(self.qloss, 2, classical_loss_tensor), 0)
     
-    def param_to_quantum_loss(self, p):
+    def param_to_quantum_loss(self, p_vec):
         """
         Function mapping a parameter to the quantum loss.
-        `p` is a parametrization of the PQC.
+        `p_vec` is a vectorized parametrization (size: dim theta * num bases) of the PQC.
         
         Note: to train the CNet we will need a concatenation of the parameter and the 
         true metric. See `quantum_loss_metric()` for documentation on `classical_loss_tensor`.
         """
-        classical_loss_tensor = np.zeros((self.num_bases, 2))
-        classical_loss_tensor[:,0] = np.array([qc.evaluate_true_metric(p) for qc in self.PQCs])
-        classical_loss_tensor[:,1] = np.array([cnet.run_then_train_SGD(
-                                                    np.concatenate((p, classical_loss_tensor[i,0])))[0]
+        p_tens = t.zeros((self.num_bases, p_vec.shape[0] // self.num_bases + 1))
+        p_tens[:,:-1] = p_vec.reshape((self.num_bases, p_vec.shape[0] // self.num_bases)) # shape: (num bases, dim theta + 1)
+        print(f'p_tens:\n{p_tens}')
+        classical_loss_tensor = t.zeros((self.num_bases, 2))
+        classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p) for p, qc in zip(p_tens[:,:-1], self.PQCs)])
+        p_tens[:,-1] = classical_loss_tensor[:,0] # add true metric to parameter tensor
+        print(f'p_tens:\n{p_tens}')
+        classical_loss_tensor[:,1] = t.tensor([cnet.run_then_train_SGD(p_tens[i])[0]
                                                 for i, cnet in enumerate(self.CNets)]) # estimated metric
         return self.__quantum_loss_metric(classical_loss_tensor)
     
@@ -97,17 +91,27 @@ class HQNet(nn.Module):
         
         * The `bounds` variable is parametrization-dependent!
         """
-        theta_0 = np.array(
-                        [
-                            qc.gen_rand_data(1, include_metric=False).squeeze() 
-                        for qc in self.PQCs
-                        ]
-                       ) # shape: (num bases,)
-        bounds = [(0, 2*pi)] * (self.L * 3)
-        result = nelder_mead(self.param_to_quantum_loss, 
-                                   theta_0, disp=disp, 
-                                   adaptive=adaptive, 
-                                   bounds=bounds)
+        theta_0 = t.zeros(self.num_bases * self.L * 3)
+        t.cat([
+                    qc.gen_rand_data(1, include_metric=False).squeeze() 
+                for qc in self.PQCs
+                ], out=theta_0
+                ) # shape: (num bases * dim theta,)
+        print(f'theta_0:\n{theta_0}')
+        print(self.param_to_quantum_loss(theta_0))
+        return
+        bounds = [(0, 2*pi)] * (self.num_bases * self.L * 3)
+        result = minimize(self.param_to_quantum_loss, 
+                          theta_0, bounds=bounds, method='Nelder-Mead', 
+                          options={'func': None, 
+                                   'maxiter': None, 
+                                   'maxfev': None, 
+                                   'disp': disp, 
+                                   'return_all': False, 
+                                   'initial_simplex': None, 
+                                   'xatol': 0.0001, 
+                                   'fatol': 0.0001, 
+                                   'adaptive': adaptive})
         
         print(f"Optimization {'SUCCEEDED' if result.success else 'FAILED'}: exit code {result.status}")
         print(f"Message from solver: {result.message}")
