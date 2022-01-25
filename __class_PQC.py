@@ -26,7 +26,7 @@ Defaults to KL divergence.
 """
 
 class PQC:
-    def __init__(self, state, basis_param=None, metric_func=KL):
+    def __init__(self, state, basis_param=None, metric_func=KL, say_hi=True):
         self.metric = metric_func
         self.state = state
         self.L = state.num_qubits
@@ -43,7 +43,8 @@ class PQC:
         else:
             self.basis_dist = state.probabilities()
         
-        print("Parametrized quantum circuit initialized.")
+        if say_hi:
+            print("Parametrized quantum circuit initialized.")
         
     def __Q_th(self, p):
         """
@@ -54,7 +55,7 @@ class PQC:
         """
         qubits = QuantumRegister(self.L)
         Q_th = QuantumCircuit(qubits)
-        p_sqrt = int(np.sqrt(p.size()[0]))
+        p_sqrt = int(np.sqrt(p.shape[0]))
         p = t.reshape(p, (p_sqrt, p_sqrt))
         if type(p).__module__ == t.__name__:
             p = p.clone().cpu().detach().numpy()
