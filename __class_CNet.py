@@ -1,9 +1,9 @@
+from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM
 import torch as t
 import torch.nn as nn
 from torch.nn import functional as F
 import random
 import numpy as np
-from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM
 
 """
 The CNet component of the HQ Net. 
@@ -33,7 +33,6 @@ class CNet(nn.Module):
         """
         * Parametrization-dependent function.
         """
-        print(param)
         x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization
         x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
@@ -116,6 +115,5 @@ class CNet(nn.Module):
         First evaluate the data using the network on a single datum, then
         train it using `train_SGD`.
         """
-        print(f"datum:\n", datum)
         assert len(datum.shape) == 1
         return self.run(datum[:-1]), self.train_SGD(datum)

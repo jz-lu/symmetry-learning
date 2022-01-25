@@ -1,8 +1,9 @@
+from ___constants import CNET_TEST_SIZE, CNET_TRAIN_SIZE, SAMPLING_DENSITY
 from __loss_funcs import KL
+from __class_BasisTransformer import BasisTransformer
 from qiskit import QuantumRegister, QuantumCircuit
 import numpy as np
 import torch as t
-from ___constants import CNET_TEST_SIZE, CNET_TRAIN_SIZE, SAMPLING_DENSITY
 from math import pi
 
 """
@@ -29,11 +30,19 @@ class PQC:
         self.metric = metric_func
         self.state = state
         self.L = state.num_qubits
+            
         if type(basis_param).__module__ == t.__name__:
             self.bp = basis_param.clone().cpu().detach().numpy()
         elif type(basis_param).__module__ == np.__name__:
             self.bp = basis_param
         self.bp = -self.bp # *= -1 since measurement ~= inverted rotation
+        
+        # Obtain distribution of state when measured in the given basis.
+        if basis_param is not None:
+            self.basis_dist = BasisTransformer([state], basis_param).updated_dist()[0]
+        else:
+            self.basis_dist = state.probabilities()
+        
         print("Parametrized quantum circuit initialized.")
         
     def __Q_th(self, p):
@@ -65,7 +74,7 @@ class PQC:
         Calculate the metric loss of Q_th(p)|state> against reference |state>,
         where p parametrizes the circuit Q_th.
         """
-        return self.metric(self.state.probabilities(), self.__Q_th(p).probabilities())
+        return self.metric(self.basis_dist, self.__Q_th(p).probabilities())
     
     def true_metric_on_params(self, p_list):
         """Same as `evaluate_true_metric` but over a list of parameters"""

@@ -37,7 +37,7 @@ class BasisTransformer:
         Make the quantum circuit in qiskit to execute the transformation. Rotation
         performed with qiskit U-gates: https://qiskit.org/documentation/stubs/qiskit.circuit.library.UGate.html
         
-        param_mat: L x L matrix of (theta, phi, lambda) parameters (each col)
+        param_mat: L x L matrix of (theta, phi, lambda) parameters (a triple for each row)
         """
         qubits = QuantumRegister(self.L)
         qc = QuantumCircuit(qubits)
