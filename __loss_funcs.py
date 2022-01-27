@@ -1,5 +1,6 @@
 # * Loss functions for gradient descent / search
 import numpy as np
+import torch as t
 
 # Not a loss function (just a helper)
 def Gaussian(x, m, s):
