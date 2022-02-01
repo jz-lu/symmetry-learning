@@ -74,6 +74,12 @@ class PQC:
         """
         Calculate the metric loss of Q_th(p)|state> against reference |state>,
         where p parametrizes the circuit Q_th.
+        
+        TODO | Currently, we are using the distribution from Qiskit. Ultimately, 
+        TODO | we'd like to do it on a poly(L) sampling scheme. A priori it seems
+        TODO | like a poly(L) scheme is "obviously" impossible, in which case a
+        TODO | exp(L) scheme is also acceptable due to the fundamental dimensionality
+        TODO | problem of the Hilbert space.
         """
         return self.metric(self.basis_dist, self.__Q_th(p).probabilities())
     
