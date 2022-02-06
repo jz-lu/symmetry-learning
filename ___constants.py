@@ -8,10 +8,23 @@ CNET_CONV_NCHAN = 4
 QNET_HIDDEN_DIM = 100
 QNET_BATCH_SIZE = 100
 
-Q_MODE_NM = 'nm' # Nelder-Mead
-Q_MODE_GD = 'gd' # SGD
-Q_MODE_ADAM = 'adam'
-Q_MODES = (Q_MODE_NM, Q_MODE_GD, Q_MODE_ADAM)
+Q_MODE_NM = 'Nelder-Mead'
+Q_MODE_GD = 'GD'
+Q_MODE_ADAM = 'Adam'
+Q_MODE_CG = 'CG'
+Q_MODE_AQGD = 'AQGD'
+Q_MODE_NFT = 'NFT'
+Q_MODE_SPSA = 'SPSA'
+Q_MODE_TNC = 'TNC'
+Q_MODE_G_ESCH = 'g-ESCH'
+Q_MODE_G_ISRES = 'g-ISRES'
+Q_MODE_G_DIRECT_L = 'g-DIRECT_L'
+
+Q_MODES = (Q_MODE_NM, Q_MODE_GD, Q_MODE_ADAM, 
+           Q_MODE_AQGD, Q_MODE_CG, Q_MODE_NFT, 
+           Q_MODE_SPSA, Q_MODE_TNC, Q_MODE_G_ESCH,
+           Q_MODE_G_ISRES, Q_MODE_G_DIRECT_L)
+
 DEFAULT_QNET_OPS = {
     'disp': False,      # Nelder-Mead: display convergence messages
     'adaptive': False,  # Nelder-Mead: use high-dimensional adaptive algorithm

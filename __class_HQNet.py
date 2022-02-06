@@ -1,6 +1,10 @@
 from inspect import Parameter
 from ___constants import (
-    Q_MODE_GD, Q_MODE_NM, Q_MODES, 
+    Q_MODE_GD, Q_MODE_NM, Q_MODE_ADAM, 
+    Q_MODE_G_DIRECT_L, Q_MODE_AQGD, Q_MODE_CG,
+    Q_MODE_G_ESCH, Q_MODE_G_ISRES, Q_MODE_NFT, 
+    Q_MODE_SPSA, Q_MODE_TNC, 
+    Q_MODES, 
     DEFAULT_QNET_OPS, 
     MINIMUM_LR
 )
@@ -9,6 +13,11 @@ from __class_CNet import CNet
 from __class_PQC import PQC
 import numpy as np
 import numpy.random as npr
+from qiskit.algorithms.optimizers import (
+    ADAM, AQGD, CG, GradientDescent,
+    NELDER_MEAD, NFT, SPSA, TNC, 
+    ESCH, ISRES, DIRECT_L
+)
 from scipy.optimize import minimize
 import torch as t
 from math import pi
@@ -25,7 +34,8 @@ Currently built to perform either gradient descent via stochastic finite differe
 """
 
 class HQNet:
-    def __init__(self, state, bases, metric_func=KL, mode=Q_MODE_GD, regularize=False):
+    def __init__(self, state, bases, eta=1e-2, maxiter=1000,
+                 metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -48,7 +58,34 @@ class HQNet:
         self.num_bases = len(bases)
         self.regularize = regularize
         
-        print(f"{'Non-r' if not regularize else 'R'}egularized hybrid quantum net initialized -- Hello world!")
+        # Choose an algorithm including local (no predix)
+        # and global (prefixed with g-) search algorithms on qiskit.
+        if self.mode == Q_MODE_ADAM:
+            self.optimizer = ADAM(lr=eta)
+        elif self.mode == Q_MODE_GD:
+            self.optimizer = GradientDescent(maxiter=maxiter, learning_rate=eta)
+        elif self.mode == Q_MODE_NM:
+            self.optimizer = NELDER_MEAD(adaptive=True, disp=disp)
+        elif self.mode == Q_MODE_CG:
+            self.optimizer = CG(maxiter=maxiter, disp=disp)
+        elif self.mode == Q_MODE_AQGD:
+            self.optimizer = AQGD(eta=eta)
+        elif self.mode == Q_MODE_NFT:
+            self.optimizer = NFT(disp=disp)
+        elif self.mode == Q_MODE_SPSA:
+            self.optimizer = SPSA(maxiter=maxiter, learning_rate=eta)
+        elif self.mode == Q_MODE_TNC:
+            self.optimizer = TNC(maxiter=maxiter, disp=disp)
+        elif self.mode == Q_MODE_G_ESCH:
+            self.optimizer = ESCH(max_evals=maxiter)
+        elif self.mode == Q_MODE_G_ISRES:
+            self.optimizer = ISRES(max_evals=maxiter)
+        elif self.mode == Q_MODE_G_DIRECT_L:
+            self.optimizer = DIRECT_L(max_evals=maxiter)
+        else:
+            raise TypeError(f'Invalid choice of algorithm: {self.mode}')
+        
+        print(f"{'Non-r' if not regularize else 'R'}egularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
         """
@@ -72,7 +109,7 @@ class HQNet:
         Note: to train the CNet we will need a concatenation of the parameter and the 
         true metric. See `quantum_loss_metric()` for documentation on `classical_loss_tensor`.
         """
-        p_vec = t.from_numpy(p_vec) if self.mode == Q_MODE_NM else p_vec
+        p_vec = p_vec if t.is_tensor(p_vec) else t.from_numpy(p_vec)
         p_tens = t.zeros((self.num_bases, p_vec.size()[0] + 1))
         for i in range(self.num_bases):
             p_tens[i,:-1] = p_vec.clone()
@@ -82,7 +119,7 @@ class HQNet:
                                                 for p, cnet in zip(p_tens, self.CNets)]) # estimated metric
         return self.__quantum_loss_metric(classical_loss_tensor)
     
-    def find_potential_symmetry(self, atol=1e-4, eta=1e-2, algo_ops=DEFAULT_QNET_OPS, print_log=False):
+    def find_potential_symmetry(self, print_log=True):
         """
         Run the optimization algorithm to obtain the maximally symmetric
         parameter, regularizing with the CNet. Train the CNet in parallel.
@@ -97,7 +134,7 @@ class HQNet:
         respectively. In SGD, `num_epochs : Int` is the number of times we choose
         a random parameter and do SGD over, `h : Float` is the finite difference parameter.
         
-        RETURNS: proposed symmetry, (stochastic parameter empirical distribution) <-- if mode is FDSGD
+        RETURNS: proposed symmetry
         
         ? Open question: will the CNet performance get worse when the batch is 
         ? a local path in the space, not a randomly sampled set of parameters?
@@ -106,69 +143,20 @@ class HQNet:
         
         * The `bounds` variable is parametrization-dependent!
         """
-        ops = DEFAULT_QNET_OPS
-        ops.update(algo_ops)
         theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
         n_param = theta_0.shape[0]
-        
-        if self.mode == Q_MODE_NM:
-            bounds = [(0, 2*pi)] * n_param
-            result = minimize(self.param_to_quantum_loss, 
-                            theta_0, bounds=bounds, method='Nelder-Mead', 
-                            options={'disp': ops['disp'], 
-                                    'return_all': False, 
-                                    'initial_simplex': None, 
-                                    'xatol': 0.0001, 
-                                    'fatol': 0.0001, 
-                                    'adaptive': ops['adaptive']})
-            
-            if print_log:
-                print(f"Optimization {'SUCCEEDED' if result.success else 'FAILED'}: exit code {result.status}")
-                print(f"Message from solver: {result.message}")
-                print(f"Final {'non-' if not self.regularize else ''}regularized loss value: {result.fun}")
-            return result.x
+        bounds = [(0, 2*pi)] * n_param
 
-        elif self.mode == Q_MODE_GD:
-            h = ops['h'] # finite difference parameter
-            theta = theta_0
-            num_epochs = int(ops['num_epochs'])
-            max_iter = int(ops['max_iter'])
-            abs_grads = np.zeros(num_epochs)
-            completion_times = np.zeros(num_epochs)
-            idxs_chosen = np.zeros(num_epochs)
-            
-            for i in range(num_epochs):
-                lr = eta # an adjustable learning rate
-                idx = npr.randint(n_param) # indexes the parameter we will do coordinate FDGD on in this epoch
-                num_steps = 0
-                idxs_chosen[i] = idx
-                
-                while num_steps < max_iter:
-                    theta_perturbed = theta.clone()
-                    theta_perturbed[idx] += theta_perturbed[idx] + h
-                    
-                    # Evaluate the loss at the (un-)perturbed state and take a finite difference
-                    fd_stochastic_deriv = (self.param_to_quantum_loss(theta_perturbed) - self.param_to_quantum_loss(theta)) / h
-                    theta[idx] -= lr * fd_stochastic_deriv # take a step
-                    num_steps += 1
-                    if abs(fd_stochastic_deriv) <= atol:
-                        break
-                    if num_steps == max_iter:
-                        print(f"[Epoch {i+1}] FDSGD failed to converge on parameter {idx} within {max_iter} steps. Grad = {fd_stochastic_deriv}")
-                    
-                    # Exponentially adjust the learning rate if we're in roughly in the order of magnitude
-                    if abs(fd_stochastic_deriv) / atol <= 10:
-                        lr = max(MINIMUM_LR, 0.95 * lr)
-                        
-                # Compute some statistics
-                abs_grads[i] = abs(fd_stochastic_deriv)
-                completion_times[i] = num_steps
-                if print_log:
-                    print("Run Statistics:")
-                    print(f"Avg steps per epoch = {np.mean(completion_times)} with deviation {np.std(completion_times)}")
-                    print(f"Avg abs grad = {np.mean(abs_grads)} with deviation {np.std(abs_grads)}")
-                
-            return theta.numpy(), idxs_chosen
+        point, value, nfev = self.optimizer.optimize(n_param, 
+                                                     self.param_to_quantum_loss, 
+                                                     initial_point=theta_0, 
+                                                     variable_bounds=bounds)
+        print(f"Optimized to QKL = {value}")
+        if print_log:
+            print(f"Queried loss func {nfev} times")
+        return point
+        
+        
         
         
     
