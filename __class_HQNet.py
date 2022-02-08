@@ -73,7 +73,7 @@ class HQNet:
         elif self.mode == Q_MODE_NFT:
             self.optimizer = NFT(disp=disp)
         elif self.mode == Q_MODE_SPSA:
-            self.optimizer = SPSA(maxiter=maxiter, learning_rate=eta)
+            self.optimizer = SPSA(maxiter=maxiter)
         elif self.mode == Q_MODE_TNC:
             self.optimizer = TNC(maxiter=maxiter, disp=disp)
         elif self.mode == Q_MODE_G_ESCH:
@@ -151,10 +151,11 @@ class HQNet:
                                                      self.param_to_quantum_loss, 
                                                      initial_point=theta_0, 
                                                      variable_bounds=bounds)
-        print(f"Optimized to QKL = {value}")
+        
         if print_log:
+            print(f"Optimized to QKL = {value}")
             print(f"Queried loss func {nfev} times")
-        return point
+        return point, value
         
         
         
