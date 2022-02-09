@@ -35,12 +35,18 @@ Currently built to perform either gradient descent via stochastic finite differe
 
 class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
-                 metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False):
+                 metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
+                 reg_scale=3):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
+        
+        If regularize is True, `reg_scale` should be set to a number on the same order 
+        as that of a poorly optimized quantum loss metric (e.g. KL divergence). 
+        This requires numerical analysis on a system-by-system basis.
         """
         assert mode in Q_MODES, f"Mode {mode} not one of valid choices {Q_MODES}"
+        self.regularize = regularize
         self.mode = mode
         self.L = state.num_qubits
         self.CNets = [CNet(
@@ -53,10 +59,8 @@ class HQNet:
                         metric_func=metric_func
                         )
                 for basis in bases]
-        self.regularizer_transform = lambda x: 0.5 * x # transformation to estimated metric
-        self.qloss = lambda x: x[1] - self.regularizer_transform(x[0])
+        self.qloss = lambda x: x[0] + reg_scale * np.tanh((x[0]-x[1])**2)
         self.num_bases = len(bases)
-        self.regularize = regularize
         
         # Choose an algorithm including local (no predix)
         # and global (prefixed with g-) search algorithms on qiskit.
@@ -106,6 +110,12 @@ class HQNet:
         Function mapping a parameter to the quantum loss.
         `p_vec` is a vectorized parametrization (size: dim theta) of the PQC.
         
+        If regularization is used then `cnet.run_then_enq(p)` will build a queue of 
+        data points being explored in the present search. Once this search epoch completes,
+        the queue is trained together as a batch to upgrade the knowledge of the CNet, making
+        it an adaptive regularizer. If the regularizer is not used, then the second piece of
+        the classical loss tensor is discarded.
+        
         Note: to train the CNet we will need a concatenation of the parameter and the 
         true metric. See `quantum_loss_metric()` for documentation on `classical_loss_tensor`.
         """
@@ -115,18 +125,18 @@ class HQNet:
             p_tens[i,:-1] = p_vec.clone()
         classical_loss_tensor = t.zeros((self.num_bases, 2))
         classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
-        classical_loss_tensor[:,1] = t.tensor([cnet.run_then_train_SGD(p)[0]
+        classical_loss_tensor[:,1] = t.tensor([cnet.run_then_enq(p)
                                                 for p, cnet in zip(p_tens, self.CNets)]) # estimated metric
+        
         return self.__quantum_loss_metric(classical_loss_tensor)
     
-    def find_potential_symmetry(self, print_log=True):
+    def find_potential_symmetry(self, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
         """
         Run the optimization algorithm to obtain the maximally symmetric
         parameter, regularizing with the CNet. Train the CNet in parallel.
         Start at a random initial parameter `theta_0`.
-                
-        For singleton datum training only. We can use a Nelder-Mead simplex
-        search or a finite difference stochastic gradient descent (FDSGD).
+        
+        If `self.regularize = False`, then the `reg_*` parameters are ignored.
         
         In `algo_ops` one can specify specific options for the algorithm of choice. 
         In nelder-mead, `disp : Bool` and `adaptive : Bool` indicate whether to 
@@ -140,8 +150,6 @@ class HQNet:
         ? a local path in the space, not a randomly sampled set of parameters?
         ? (We want it to still be able to interpolate very well, but we DON'T 
         ? want it to extrapolate well. That's the point of regularizing.)
-        
-        * The `bounds` variable is parametrization-dependent!
         """
         theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
         n_param = theta_0.shape[0]
@@ -151,11 +159,14 @@ class HQNet:
                                                      self.param_to_quantum_loss, 
                                                      initial_point=theta_0, 
                                                      variable_bounds=bounds)
+
+        if self.regularize:
+            regularizer_losses = [cnet.flush_q() for cnet in self.CNets]
         
         if print_log:
             print(f"Optimized to QKL = {value}")
             print(f"Queried loss func {nfev} times")
-        return point, value
+        return point, value, regularizer_losses
         
         
         

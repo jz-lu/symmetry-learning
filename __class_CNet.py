@@ -13,6 +13,9 @@ mapping distributions to the approximate metric.
 Implementation followed from: https://pyt.org/tutorials/beginner/blitz/neural_networks_tutorial.html.
 
 Currently, the metric we use is the: KL Divergence.
+
+* Open problem: at some point we will obviously need to scale CNET_HIDDEN_DIM
+* as a function of the number of qubits. What's the scaling function?
 """
 
 class CNet(nn.Module):
@@ -27,6 +30,7 @@ class CNet(nn.Module):
         self.batch_size = 100
         self.loss_func = nn.MSELoss()
         self.num_qubits = num_qubits
+        self.train_q = []
         print("Classical deep net initialized.")
     
     def forward(self, param):
@@ -117,3 +121,24 @@ class CNet(nn.Module):
         """
         assert len(datum.shape) == 1
         return self.run(datum[:-1]), self.train_SGD(datum)
+
+    def run_then_enq(self, datum):
+        """
+        Run the network on the datum, then enqueue onto a queue
+        for training. The queue is trained as a batch when desired.
+        """
+        assert len(datum.shape) == 1
+        self.train_q.append(datum)
+        return self.run(datum[:-1])
+        
+    def flush_q(self, nepoch=2000, eta=1e-2, loss_window=10, print_log=False):
+        """
+        Flush the training queue by training it all as a batch.
+        """
+        losses = self.train(np.array(self.train_q), 
+                          nepoch=nepoch, eta=eta, 
+                          loss_window=loss_window, 
+                          print_log=print_log)
+        self.train_q = [] # clear the queue
+        return losses
+        
