@@ -55,8 +55,8 @@ class PQC:
         """
         qubits = QuantumRegister(self.L)
         Q_th = QuantumCircuit(qubits)
-        p_sqrt = int(np.sqrt(p.shape[0]))
-        p = t.reshape(p, (p_sqrt, p_sqrt))
+        assert p.shape[0] == self.L * 3
+        p = t.reshape(p, (self.L, 3))
         if type(p).__module__ == t.__name__:
             p = p.clone().cpu().detach().numpy()
         

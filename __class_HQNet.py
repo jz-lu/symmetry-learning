@@ -85,7 +85,7 @@ class HQNet:
         else:
             raise TypeError(f'Invalid choice of algorithm: {self.mode}')
         
-        print(f"{'Non-r' if not regularize else 'R'}egularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
+        print(f"{self.L}-qubit {'non-' if not regularize else ''}regularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
         """
