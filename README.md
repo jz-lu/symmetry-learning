@@ -6,5 +6,6 @@ A unit test of the classical deep network is shown in `CNet_unit_test.ipynb` and
 example of a HQNSL scheme is shown in `HQN_1gates.ipynb`. Tests are actively being performed
 on the GHZ state, XY-Hamiltonian ground state, generalized cluster states, and eventually more.
 
-Branch: Main
+Branch: `main`
+
 Version: 0.1
