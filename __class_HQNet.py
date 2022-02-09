@@ -65,7 +65,7 @@ class HQNet:
         elif self.mode == Q_MODE_GD:
             self.optimizer = GradientDescent(maxiter=maxiter, learning_rate=eta)
         elif self.mode == Q_MODE_NM:
-            self.optimizer = NELDER_MEAD(adaptive=True, disp=disp)
+            self.optimizer = NELDER_MEAD(maxiter=maxiter, maxfev=maxiter, adaptive=True, disp=disp)
         elif self.mode == Q_MODE_CG:
             self.optimizer = CG(maxiter=maxiter, disp=disp)
         elif self.mode == Q_MODE_AQGD:
