@@ -1,4 +1,4 @@
-from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM
+from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM, PARAM_PER_QUBIT
 import torch as t
 import torch.nn as nn
 from torch.nn import functional as F
@@ -21,7 +21,7 @@ Currently, the metric we use is the: KL Divergence.
 class CNet(nn.Module):
     def __init__(self, num_qubits):
         super(CNet, self).__init__() # initialize torch nn
-        self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
+        self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,PARAM_PER_QUBIT))
         self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
         self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
         self.linear2 = nn.Linear(CNET_HIDDEN_DIM, CNET_HIDDEN_DIM)
@@ -37,7 +37,7 @@ class CNet(nn.Module):
         """
         * Parametrization-dependent function.
         """
-        x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization
+        x = param.view(-1, self.num_qubits, PARAM_PER_QUBIT)
         x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))

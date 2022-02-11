@@ -1,12 +1,10 @@
-from inspect import Parameter
 from ___constants import (
+    PARAM_PER_QUBIT, 
     Q_MODE_GD, Q_MODE_NM, Q_MODE_ADAM, 
     Q_MODE_G_DIRECT_L, Q_MODE_AQGD, Q_MODE_CG,
     Q_MODE_G_ESCH, Q_MODE_G_ISRES, Q_MODE_NFT, 
     Q_MODE_SPSA, Q_MODE_TNC, 
-    Q_MODES, 
-    DEFAULT_QNET_OPS, 
-    MINIMUM_LR
+    Q_MODES
 )
 from __loss_funcs import KL
 from __class_CNet import CNet
@@ -18,7 +16,6 @@ from qiskit.algorithms.optimizers import (
     NELDER_MEAD, NFT, SPSA, TNC, 
     ESCH, ISRES, DIRECT_L
 )
-from scipy.optimize import minimize
 import torch as t
 from math import pi
 
@@ -36,7 +33,7 @@ Currently built to perform either gradient descent via stochastic finite differe
 class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
-                 reg_scale=3):
+                 reg_scale=3, depth=0):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -56,10 +53,11 @@ class HQNet:
         self.PQCs = [PQC(
                         state, 
                         basis_param=basis, 
-                        metric_func=metric_func
+                        metric_func=metric_func,
+                        depth=depth
                         )
                 for basis in bases]
-        self.qloss = lambda x: x[0] + reg_scale * np.tanh((x[0]-x[1])**2)
+        self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))
         self.num_bases = len(bases)
         
         # Choose an algorithm including local (no predix)
@@ -104,6 +102,14 @@ class HQNet:
             return np.sum(np.apply_along_axis(self.qloss, 1, classical_loss_tensor.numpy()), 0)
         else:
             return t.sum(classical_loss_tensor[:,0]).item()
+    
+    def view_circuit(self):
+        """
+        Give a circuit with some random parameters. The purpose of the function is to let
+        the user draw the circuit and check that the architecture looks right, not to 
+        determine if the parameters used are the right ones.
+        """
+        return self.PQCs[0].get_circ(t.zeros(PARAM_PER_QUBIT * self.L))
         
     def param_to_quantum_loss(self, p_vec):
         """
@@ -160,6 +166,7 @@ class HQNet:
                                                      initial_point=theta_0, 
                                                      variable_bounds=bounds)
 
+        regularizer_losses = None
         if self.regularize:
             regularizer_losses = [cnet.flush_q() for cnet in self.CNets]
         
