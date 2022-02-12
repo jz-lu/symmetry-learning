@@ -1,5 +1,5 @@
 from ___constants import (
-    PARAM_PER_QUBIT, 
+    PARAM_PER_QUBIT_PER_DEPTH, 
     Q_MODE_GD, Q_MODE_NM, Q_MODE_ADAM, 
     Q_MODE_G_DIRECT_L, Q_MODE_AQGD, Q_MODE_CG,
     Q_MODE_G_ESCH, Q_MODE_G_ISRES, Q_MODE_NFT, 
@@ -26,8 +26,9 @@ of a given quantum state. It combines a parametrized quantum circuit (PQC)
 and a classical deep network (CNet), which learns to estimate the loss within 
 the HQNet to regularize against finding known symmetries.
 
-Currently built to perform either gradient descent via stochastic finite differences 
-(mode=gd) or Nelder-Mead simplex search (mode=nm).
+Currently built to perform a number of local optimizations and global search algorithms.
+The choice is specified in `mode`, and the options are given in an TypeError upon
+specifying an invalid option.
 """
 
 class HQNet:
@@ -45,20 +46,22 @@ class HQNet:
         assert mode in Q_MODES, f"Mode {mode} not one of valid choices {Q_MODES}"
         self.regularize = regularize
         self.mode = mode
+        self.depth = depth
         self.L = state.num_qubits
         self.CNets = [CNet(
-                            self.L
+                            self.L, depth=self.depth
                           ) 
                       for _ in bases]
         self.PQCs = [PQC(
                         state, 
                         basis_param=basis, 
                         metric_func=metric_func,
-                        depth=depth
+                        depth=self.depth
                         )
                 for basis in bases]
         self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))
         self.num_bases = len(bases)
+        self.n_param = (self.depth + 1) * PARAM_PER_QUBIT_PER_DEPTH * self.L
         
         # Choose an algorithm including local (no predix)
         # and global (prefixed with g-) search algorithms on qiskit.
@@ -109,7 +112,7 @@ class HQNet:
         the user draw the circuit and check that the architecture looks right, not to 
         determine if the parameters used are the right ones.
         """
-        return self.PQCs[0].get_circ(t.zeros(PARAM_PER_QUBIT * self.L))
+        return self.PQCs[0].get_circ(t.zeros(self.n_param))
         
     def param_to_quantum_loss(self, p_vec):
         """

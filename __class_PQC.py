@@ -1,4 +1,7 @@
-from ___constants import CNET_TEST_SIZE, CNET_TRAIN_SIZE, SAMPLING_DENSITY, PARAM_PER_QUBIT
+from ___constants import (
+    CNET_TEST_SIZE, CNET_TRAIN_SIZE, SAMPLING_DENSITY, 
+    PARAM_PER_QUBIT_PER_DEPTH
+)
 from __loss_funcs import KL
 from __class_BasisTransformer import BasisTransformer
 from qiskit import QuantumRegister, QuantumCircuit
@@ -10,8 +13,9 @@ from math import pi
 PQC: parametrized quantum circuit. Having chosen (in advance) a parametrization 
 for a family of Q-circuits, we map the parameter to its corresponding circuit below. 
 
-`basis_param` is a Lx2 matrix of parameters specifying a tensor product of rotations in the 
-L-tensored Bloch sphere. The exact parametrization is specified by Qiskit's U-gate.
+`basis_param` is a L x depth+1 x PARAM_PER_QUBIT_PER_DEPTH matrix of parameters 
+specifying a tensor product of rotations in the L-tensored Bloch sphere. 
+The exact parametrization is specified by Qiskit's Ry and Rz gates.
 
 Application of the circuit on a set of quantum states generates a dataset of states
 evolved by the PQC. 
@@ -32,6 +36,7 @@ class PQC:
         self.state = state
         self.L = state.num_qubits
         self.depth = depth
+        self.n_param = self.L * PARAM_PER_QUBIT_PER_DEPTH * (self.depth + 1)
             
         if type(basis_param).__module__ == t.__name__:
             self.bp = basis_param.clone().cpu().detach().numpy()
@@ -60,19 +65,21 @@ class PQC:
         """
         qubits = QuantumRegister(self.L)
         Q_th = QuantumCircuit(qubits)
-        assert p.shape[0] == self.L * PARAM_PER_QUBIT
-        p = t.reshape(p, (self.L, PARAM_PER_QUBIT))
+        assert p.shape[0] == self.n_param
+        p = t.reshape(p, (self.L, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH))
         if type(p).__module__ == t.__name__:
             p = p.clone().cpu().detach().numpy()
         
         # Quantum parametrization -- DYNAMIC (change based on circuit param)
         for i in range(self.L):
-                Q_th.u(*p[i], qubits[i])
-        for _ in range(self.depth):
+            Q_th.ry(p[i,0,0], qubits[i])
+            Q_th.rz(p[i,0,1], qubits[i])
+        for d in range(1, self.depth + 1):
             for i in range(self.L-1):
                 Q_th.cx(i, i+1)
             for i in range(self.L):
-                Q_th.u(*p[i], qubits[i])
+                Q_th.ry(p[i,d,0], qubits[i])
+                Q_th.rz(p[i,d,1], qubits[i])
         
         # Measurement in the basis -- STATIC (do not change regardless of parameterization)
         for i in range(self.L):
@@ -108,25 +115,20 @@ class PQC:
         assert len(p_list) > 0, "Parameter list empty"
         return [self.evaluate_true_metric(p) for p in p_list]
     
-    def gen_rand_data(self, sz, include_metric=True, localize=False, requires_grad=False):
+    def gen_rand_data(self, sz, include_metric=True):
         """
         Generate `sz` random input parameters (just one axis rotation for now), 
         which inputs into the CNet, 
         sampled from X ~ 2 * Pi * DUnif(n), whwere n = SAMPLING_DENSITY.
         """
-        n_param = PARAM_PER_QUBIT * self.L
         if include_metric:
-            dataset = t.zeros(sz, n_param + 1)
-            params = t.randint(0, SAMPLING_DENSITY, (sz, self.L*3)) * 2 * pi / SAMPLING_DENSITY
-            if localize:
-                params[:,7:] = 0
+            dataset = t.zeros(sz, self.n_param + 1)
+            params = t.randint(0, SAMPLING_DENSITY, (sz, self.n_param)) * 2 * pi / SAMPLING_DENSITY
             dataset[:,:-1] = params # the last column of the dataset stores the output loss metric
             true_metric = t.tensor([self.evaluate_true_metric(param) for param in params]) # target value for CNet
             dataset[:,-1] = true_metric
         else:
-            dataset = t.randint(0, SAMPLING_DENSITY, (sz, n_param)) * 2 * pi / SAMPLING_DENSITY
-            if requires_grad:
-                dataset.requires_grad_(True)
+            dataset = t.randint(0, SAMPLING_DENSITY, (sz, self.n_param)) * 2 * pi / SAMPLING_DENSITY
         return dataset
 
     def generate_train_test(self, train_size=CNET_TRAIN_SIZE, test_size=CNET_TEST_SIZE):
@@ -134,6 +136,6 @@ class PQC:
         Generate the train and test datasets for neural network training.
         A convenience function mostly for unit-testing the CNet.
         """
-        train_data = self.gen_rand_data(train_size, localize=False) # localize is a debugging parameter
+        train_data = self.gen_rand_data(train_size)
         test_data = self.gen_rand_data(test_size)
         return train_data, test_data
