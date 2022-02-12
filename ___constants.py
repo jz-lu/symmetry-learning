@@ -1,3 +1,6 @@
+# Parameterizations
+PARAM_PER_QUBIT_PER_DEPTH = 2
+
 # * HQNet constants
 SAMPLING_DENSITY = 200
 CNET_TRAIN_SIZE = 3000

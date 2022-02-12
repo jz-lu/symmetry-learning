@@ -1,4 +1,4 @@
-from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM
+from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM, PARAM_PER_QUBIT_PER_DEPTH
 import torch as t
 import torch.nn as nn
 from torch.nn import functional as F
@@ -16,14 +16,17 @@ Currently, the metric we use is the: KL Divergence.
 
 * Open problem: at some point we will obviously need to scale CNET_HIDDEN_DIM
 * as a function of the number of qubits. What's the scaling function?
+
+* Open problem: do we need to add another convolutional layer to treat the depth?
 """
 
 class CNet(nn.Module):
-    def __init__(self, num_qubits):
+    def __init__(self, num_qubits, depth=0):
         super(CNet, self).__init__() # initialize torch nn
-        self.conv1 = nn.Conv2d(1, CNET_CONV_NCHAN, (1,3))
-        self.conv2 = nn.Conv2d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, (1,1))
-        self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits, CNET_HIDDEN_DIM)
+        self.depth = depth
+        self.conv1 = nn.Conv3d(1, CNET_CONV_NCHAN, (1,1,PARAM_PER_QUBIT_PER_DEPTH))
+        self.conv2 = nn.Conv3d(CNET_CONV_NCHAN, CNET_CONV_NCHAN, 1)
+        self.linear1 = nn.Linear(CNET_CONV_NCHAN * num_qubits * (depth+1), CNET_HIDDEN_DIM)
         self.linear2 = nn.Linear(CNET_HIDDEN_DIM, CNET_HIDDEN_DIM)
         self.linear3 = nn.Linear(CNET_HIDDEN_DIM, 1)
         self.model = self # hack
@@ -31,17 +34,17 @@ class CNet(nn.Module):
         self.loss_func = nn.MSELoss()
         self.num_qubits = num_qubits
         self.train_q = []
-        print("Classical deep net initialized.")
+        print(f"Classical deep net of circuit depth {self.depth} initialized.")
     
     def forward(self, param):
         """
         * Parametrization-dependent function.
         """
-        x = param.view(-1, self.num_qubits, 3) #* the num_qubits x 3 comes from the PQC parametrization
+        x = param.view(-1, self.num_qubits, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH)
         x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
-        x = x.view(-1, CNET_CONV_NCHAN * self.num_qubits)
+        x = x.view(-1, CNET_CONV_NCHAN * self.num_qubits * (self.depth+1))
         x = F.leaky_relu(self.linear1(x))
         x = F.leaky_relu(self.linear2(x))
         x = F.leaky_relu(self.linear3(x))
