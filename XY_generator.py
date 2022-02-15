@@ -1,8 +1,10 @@
 # Adapted from Rodrigo's XY Hamiltonian ED GS generator
 
 import torch as t
+print(t.__version__)
 import numpy as np
 from torch.linalg import eig
+
 
 '''Device where we are running'''
 #defining the device
