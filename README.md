@@ -23,4 +23,5 @@ on the GHZ state, XY-Hamiltonian ground state, generalized cluster states, and e
 3. Cirq.
 4. Pytorch.
 
-Branch: Jon
+Branch: `main`
+Version: 0.2
