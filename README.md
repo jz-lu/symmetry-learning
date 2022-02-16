@@ -1,4 +1,4 @@
-## Hybrid Quantum Network Symmetry Learner (HQNSL) -- v0.2
+## Hybrid Quantum Network Symmetry Learner (HQNSL) -- v0.2.1
 This is HQNSL, a hybrid quantum scheme to learn the stabilizing operators, aka symmetries, 
 of many-body quantum systems. Currently under development.
 
