@@ -10,6 +10,10 @@ def qubit_expansion(L):
     d2b = np.vectorize(np.binary_repr)
     return d2b(np.arange(2**L), L)
 
+def qubit_retraction(bitstr):
+    """Inverse operation to expansion: given bitstring, return decimal"""
+    return int(bitstr, 2)
+
 def rand_basis(L):
     """Returns a random basis choice parametrized by (theta, phi, lambda) for L qubits"""
     return (2 * pi * t.rand(3)).repeat((L, 1))

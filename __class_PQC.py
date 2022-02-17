@@ -3,6 +3,7 @@ from ___constants import (
     PARAM_PER_QUBIT_PER_DEPTH
 )
 from __loss_funcs import KL
+from __helpers import qubit_retraction
 from __class_BasisTransformer import BasisTransformer
 from qiskit import QuantumRegister, QuantumCircuit
 import numpy as np
@@ -27,11 +28,19 @@ desired pristine state invariant, thereby finding a symmetry of the pristine sta
 
 `metric_func`: choice of loss metric. Many others are available in `__loss_funcs.py`. 
 Defaults to KL divergence.
+
+If `estimate` is True, the loss metric at each basis will be estimated by 
+creating `nrun * 2^L` copies of the state, running them through the circuit, and then creating
+an empirical distribution. If `estimate` is False, then the true distribution stored
+in the Qiskit backend will be used instead.
 """
 
 class PQC:
-    def __init__(self, state, basis_param=None, metric_func=KL, depth=0, say_hi=True):
+    def __init__(self, state, basis_param=None, metric_func=KL, depth=0, 
+                 estimate=False, nrun=100, say_hi=True):
         assert depth >= 0 and isinstance(depth, int), f"Invalid circuit depth {depth}"
+        self.estimate = estimate
+        self.nrun = nrun
         self.metric = metric_func
         self.state = state
         self.L = state.num_qubits
@@ -97,18 +106,34 @@ class PQC:
     def get_circ(self, p):
         return self.__make_Q_th(p)
         
-    def evaluate_true_metric(self, p):
+    def evaluate_true_metric(self, p, poly=None):
         """
         Calculate the metric loss of Q_th(p)|state> against reference |state>,
         where p parametrizes the circuit Q_th.
         
-        TODO | Currently, we are using the distribution from Qiskit. Ultimately, 
-        TODO | we'd like to do it on a poly(L) sampling scheme. A priori it seems
-        TODO | like a poly(L) scheme is "obviously" impossible, in which case a
-        TODO | exp(L) scheme is also acceptable due to the fundamental dimensionality
-        TODO | problem of the Hilbert space.
+        If the PQC is on estimation mode, the metric is computed on a sampling-based
+        estimate of the distribution. Unavoidably, the sampling has exponential
+        time complexity in L. Otherwise, the qiskit calculated backend distribution is
+        used, but the latter is incompatible with calculations on true quantum hardware.
+        
+        ? Open question: If the calculation is exponential anyway, we cannot get an 
+        ? advantage via quantum computers. Thus, is this problem fundamentally limited
+        ? to classical calculation? Unless, we can somehow learn with a polynomial sample...
+        ? Alternatively, we can define the "approximate symmetry learning problem", which works
+        ? to identify symmetries that have a distribution well-approximated by a small subset.
+        ? Or, more wildly, is it possible to do this with polynomial sampling???
         """
-        return self.metric(self.basis_dist, self.__Q_th(p).probabilities())
+        state = self.__Q_th(p)
+        distribution = None
+        if self.estimate:
+            units = 2**self.L if poly is None else self.L**poly
+            estimate = np.zeros(2**self.L)
+            for i in range(self.nrun * units):
+                estimate[qubit_retraction(state.measure()[0])] += 1
+            distribution = estimate / (self.nrun * units)
+        else:
+            distribution = state.probabilities()
+        return self.metric(self.basis_dist, distribution)
     
     def true_metric_on_params(self, p_list):
         """Same as `evaluate_true_metric` but over a list of parameters"""
