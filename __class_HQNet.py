@@ -29,12 +29,16 @@ the HQNet to regularize against finding known symmetries.
 Currently built to perform a number of local optimizations and global search algorithms.
 The choice is specified in `mode`, and the options are given in an TypeError upon
 specifying an invalid option.
+
+If `estimate` is True, then the PQC evaluates metrics using a sampling-based estimate
+of the distribution rather than the true one, which cannot be calculated in real
+quantum hardware. The units are exponential or polynomial in `L`, with noise scale `s_eps`.
 """
 
 class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
-                 reg_scale=3, depth=0):
+                 reg_scale=3, depth=0, estimate=False, s_eps=100):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -57,7 +61,9 @@ class HQNet:
                         state, 
                         basis_param=basis, 
                         metric_func=metric_func,
-                        depth=self.depth
+                        depth=self.depth,
+                        estimate=estimate,
+                        nrun=s_eps
                         )
                 for basis in bases]
         self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))

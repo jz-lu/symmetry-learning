@@ -2,8 +2,9 @@
 This is HQNSL, a hybrid quantum scheme to learn the stabilizing operators, aka symmetries, 
 of many-body quantum systems. Currently under development.
 
-A unit test of the classical deep network regularizer is shown in `CNet_unit_test.ipynb` and the simplest
-example of a HQNSL scheme is shown in `HQN_1gates.ipynb`. Tests are actively being performed
+A unit test of the classical deep network regularizer is shown in `CNet.ipynb` and the the HQNSL scheme is 
+shown in `HQN.ipynb`. An analysis of the estimation-based distribution gathering scheme is in `Estimation.ipynb`
+and simulated noise is added to the quantum state in `Noise.ipynb`. Tests are actively being performed
 on the GHZ state, XY-Hamiltonian ground state, generalized cluster states, and eventually more.
 
 ### Current work
