@@ -1,10 +1,12 @@
+from distutils.log import error
 from ___constants import (
     PARAM_PER_QUBIT_PER_DEPTH, 
     Q_MODE_GD, Q_MODE_NM, Q_MODE_ADAM, 
     Q_MODE_G_DIRECT_L, Q_MODE_AQGD, Q_MODE_CG,
     Q_MODE_G_ESCH, Q_MODE_G_ISRES, Q_MODE_NFT, 
     Q_MODE_SPSA, Q_MODE_TNC, 
-    Q_MODES
+    Q_MODES,
+    NOISE_OPS
 )
 from __loss_funcs import KL
 from __class_CNet import CNet
@@ -33,12 +35,21 @@ specifying an invalid option.
 If `estimate` is True, then the PQC evaluates metrics using a sampling-based estimate
 of the distribution rather than the true one, which cannot be calculated in real
 quantum hardware. The units are exponential or polynomial in `L`, with noise scale `s_eps`.
+
+The `noise` parameter accepts an integer from 0 to 2 and is to be used in classical simulation
+on the qiskit backend. (On quantum hardware, ensure that `noise = 0`; quantum hardwawre will
+be inevitably noisy and doesn't require simulation of such noise.) By default, `noise = 0`, 
+meaning that the PQC will be noiseless in the classical simulation. If `noise = 1`, there will
+be a small amount of depolarizing errors on single-qubit gates. If `noise = 2`, there will also
+be more general unitary errors on all of the gates. 
 """
 
 class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
-                 reg_scale=3, depth=0, estimate=False, s_eps=100):
+                 reg_scale=3, depth=0, estimate=False, poly=None, s_eps=100,
+                 noise=0, state_prep_circ=None, error_prob=0.01
+                 ):
         """
         Use a quantumfication of loss metric `metric_func` 
         over each basis in the list of bases `bases`.
@@ -47,8 +58,12 @@ class HQNet:
         as that of a poorly optimized quantum loss metric (e.g. KL divergence). 
         This requires numerical analysis on a system-by-system basis.
         """
-        maxiter = int(maxiter)
         assert mode in Q_MODES, f"Mode {mode} not one of valid choices {Q_MODES}"
+        assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
+        if noise > 0:
+            assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
+        
+        maxiter = int(maxiter)
         self.regularize = regularize
         self.mode = mode
         self.depth = depth
@@ -63,7 +78,12 @@ class HQNet:
                         metric_func=metric_func,
                         depth=self.depth,
                         estimate=estimate,
-                        nrun=s_eps
+                        nrun=s_eps,
+                        noise=noise,
+                        state_prep_circ=state_prep_circ,
+                        error_prob=error_prob,
+                        poly=poly,
+                        say_hi=False
                         )
                 for basis in bases]
         self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))
@@ -97,7 +117,7 @@ class HQNet:
         else:
             raise TypeError(f'Invalid choice of algorithm: {self.mode}')
         
-        print(f"{self.L}-qubit {'non-' if not regularize else ''}regularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
+        print(f"{self.L}-qubit (noise: {noise}) {'non-' if not regularize else ''}regularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
         """
@@ -161,11 +181,6 @@ class HQNet:
         a random parameter and do SGD over, `h : Float` is the finite difference parameter.
         
         RETURNS: proposed symmetry
-        
-        ? Open question: will the CNet performance get worse when the batch is 
-        ? a local path in the space, not a randomly sampled set of parameters?
-        ? (We want it to still be able to interpolate very well, but we DON'T 
-        ? want it to extrapolate well. That's the point of regularizing.)
         """
         theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
         n_param = theta_0.shape[0]
@@ -178,7 +193,9 @@ class HQNet:
 
         regularizer_losses = None
         if self.regularize:
-            regularizer_losses = [cnet.flush_q() for cnet in self.CNets]
+            regularizer_losses = [cnet.flush_q(
+                                                nepoch=reg_nepoch, 
+                                                eta=reg_eta) for cnet in self.CNets]
         
         if print_log:
             print(f"Optimized to QKL = {value}")

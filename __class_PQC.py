@@ -1,11 +1,17 @@
 from ___constants import (
     CNET_TEST_SIZE, CNET_TRAIN_SIZE, SAMPLING_DENSITY, 
-    PARAM_PER_QUBIT_PER_DEPTH
+    PARAM_PER_QUBIT_PER_DEPTH,
+    NOISE_OPS
 )
 from __loss_funcs import KL
-from __helpers import qubit_retraction
+from __helpers import qubit_retraction, qubit_expansion
 from __class_BasisTransformer import BasisTransformer
-from qiskit import QuantumRegister, QuantumCircuit
+from qiskit import QuantumRegister, QuantumCircuit, transpile
+from qiskit.providers.aer import AerSimulator
+from qiskit.quantum_info import Statevector
+from qiskit.providers.aer.noise import pauli_error, depolarizing_error
+from qiskit.tools.visualization import plot_histogram
+from qiskit.providers.aer.noise import NoiseModel
 import numpy as np
 import torch as t
 from math import pi
@@ -36,8 +42,15 @@ in the Qiskit backend will be used instead.
 """
 
 class PQC:
-    def __init__(self, state, basis_param=None, metric_func=KL, depth=0, 
-                 estimate=False, nrun=100, say_hi=True):
+    def __init__(self, state, basis_param=None, 
+                 metric_func=KL, depth=0, 
+                 estimate=False, nrun=100, 
+                 noise=0, markovian=False, state_prep_circ=None, error_prob=0.01, 
+                 poly=None, say_hi=True):
+        assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
+        if noise > 0:
+            assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
+            
         assert depth >= 0 and isinstance(depth, int), f"Invalid circuit depth {depth}"
         self.estimate = estimate
         self.nrun = nrun
@@ -45,6 +58,10 @@ class PQC:
         self.state = state
         self.L = state.num_qubits
         self.depth = depth
+        self.poly = poly
+        self.state_prep_circ = state_prep_circ
+        self.markovian = markovian
+        self.error_prob = error_prob
         self.n_param = self.L * PARAM_PER_QUBIT_PER_DEPTH * (self.depth + 1)
             
         if type(basis_param).__module__ == t.__name__:
@@ -55,14 +72,30 @@ class PQC:
         
         # Obtain distribution of state when measured in the given basis.
         if basis_param is not None:
-            self.basis_dist = BasisTransformer([state], basis_param).updated_dist()[0]
+            self.basis_dist = BasisTransformer([state], basis_param).updated_dist(
+                    estimate=estimate, poly=poly, nrun=nrun
+                )[0]
         else:
-            self.basis_dist = state.probabilities()
+            if estimate:
+                units = 2**self.L if self.poly is None else self.L**self.poly
+                estimate = np.zeros(2**self.L)
+                for i in range(self.nrun * units):
+                    estimate[qubit_retraction(state.measure()[0])] += 1
+                self.basis_dist = estimate / (self.nrun * units)
+            else:
+                self.basis_dist = state.probabilities()
+        
+        # Choose the appropriate quantum circuit based on noise level
+        self.evolver = self.__Q_th
+        if noise == 1:
+            self.evolver = self.__Q_th_noise_1
+        elif noise == 2:
+            self.evolver = self.__Q_th_noise_2
         
         if say_hi:
-            print("Parametrized quantum circuit initialized.")
+            print(f"Parametrized quantum circuit (noise: {noise}) initialized.")
     
-    def __make_Q_th(self, p):
+    def __make_Q_th(self, p, Q_th=None):
         """
         Make a quantum circuit in qiskit corresponding to parameters p. Currently, 
         the model used is a linear entanglement circuit with depth `self.depth`. This
@@ -73,7 +106,7 @@ class PQC:
         We will restrict ourselves to a local version, for the time being at least.
         """
         qubits = QuantumRegister(self.L)
-        Q_th = QuantumCircuit(qubits)
+        Q_th = QuantumCircuit(qubits) if Q_th is None else Q_th
         assert p.shape[0] == self.n_param
         p = t.reshape(p, (self.L, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH))
         if type(p).__module__ == t.__name__:
@@ -95,18 +128,59 @@ class PQC:
             Q_th.u(*self.bp[i], qubits[i])
             
         return Q_th
-        
+    
     def __Q_th(self, p):
         """
         Apply the quantum circuit in qiskit corresponding to Q_theta with parameters p.
         """
         Q_th = self.__make_Q_th(p)
         return self.state.copy().evolve(Q_th)
+
+    def __Q_th_noise_1(self, p):
+        """
+        Apply the quantum circuit with small depolarizing noise.
+        """
+        Q_th = self.__make_Q_th(p, Q_th=self.state_prep_circ)
+        error_depol = depolarizing_error(self.error_prob, self.L)
+        noise_depol = NoiseModel()
+        noise_depol.add_all_qubit_quantum_error(error_depol, "depolarize")
+        sim_dpnoise = AerSimulator(noise_model=noise_depol)
+        circ_dpnoise = transpile(Q_th, sim_dpnoise)
+        result_dp = sim_dpnoise.run(circ_dpnoise).result()
+        counts_dp = dict.fromkeys(qubit_expansion(self.L), 0)
+        counts_dp.update(result_dp.get_counts(0))
+        dp_dist = np.array([i[1] for i in sorted(counts_dp.items())]) / sum(counts_dp.values())
+        return Statevector(dp_dist)
+
+    def __Q_th_noise_2(self, p):
+        """
+        Apply the quantum circuit with general noise. If `self.markovian` is True,
+        only reversible errors will be applied.
+        """
+        Q_th = self.__make_Q_th(p, Q_th=Q_th)
+        noise_bit_flip = NoiseModel()
+        if not self.markovian:
+            noise_bit_flip.add_all_qubit_quantum_error(error_reset, "reset")
+            noise_bit_flip.add_all_qubit_quantum_error(error_meas, "measure")
+            error_reset = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
+            error_meas = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
+        error_gate1 = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
+        error_gate2 = error_gate1.tensor(error_gate1)
+        noise_bit_flip.add_all_qubit_quantum_error(error_gate1, 
+                                                    ["u1", "u2", "u3", "rx", "ry", "rz"])
+        noise_bit_flip.add_all_qubit_quantum_error(error_gate2, ["cx"])
+        sim_noise = AerSimulator(noise_model=noise_bit_flip)
+        circ_tnoise = transpile(Q_th, sim_noise)
+        result_bit_flip = sim_noise.run(circ_tnoise).result()
+        counts_bit_flip = dict.fromkeys(qubit_expansion(self.L), 0)
+        counts_bit_flip.update(result_bit_flip.get_counts(0))
+        bf_dist = np.array([i[1] for i in sorted(counts_bit_flip.items())]) / sum(counts_bit_flip.values())
+        return Statevector(bf_dist)
     
     def get_circ(self, p):
         return self.__make_Q_th(p)
         
-    def evaluate_true_metric(self, p, poly=None):
+    def evaluate_true_metric(self, p):
         """
         Calculate the metric loss of Q_th(p)|state> against reference |state>,
         where p parametrizes the circuit Q_th.
@@ -123,12 +197,12 @@ class PQC:
         ? to identify symmetries that have a distribution well-approximated by a small subset.
         ? Or, more wildly, is it possible to do this with polynomial sampling???
         """
-        state = self.__Q_th(p)
+        state = self.evolver(p)
         distribution = None
         if self.estimate:
-            units = 2**self.L if poly is None else self.L**poly
+            units = 2**self.L if self.poly is None else self.L**self.poly
             estimate = np.zeros(2**self.L)
-            for i in range(self.nrun * units):
+            for _ in range(self.nrun * units):
                 estimate[qubit_retraction(state.measure()[0])] += 1
             distribution = estimate / (self.nrun * units)
         else:
