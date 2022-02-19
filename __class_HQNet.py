@@ -43,6 +43,7 @@ class HQNet:
         as that of a poorly optimized quantum loss metric (e.g. KL divergence). 
         This requires numerical analysis on a system-by-system basis.
         """
+        maxiter = int(maxiter)
         assert mode in Q_MODES, f"Mode {mode} not one of valid choices {Q_MODES}"
         self.regularize = regularize
         self.mode = mode
@@ -76,7 +77,7 @@ class HQNet:
         elif self.mode == Q_MODE_AQGD:
             self.optimizer = AQGD(eta=eta)
         elif self.mode == Q_MODE_NFT:
-            self.optimizer = NFT(disp=disp)
+            self.optimizer = NFT(disp=disp, maxfev=maxiter)
         elif self.mode == Q_MODE_SPSA:
             self.optimizer = SPSA(maxiter=maxiter)
         elif self.mode == Q_MODE_TNC:
@@ -176,7 +177,7 @@ class HQNet:
         if print_log:
             print(f"Optimized to QKL = {value}")
             print(f"Queried loss func {nfev} times")
-        return point, value, regularizer_losses
+        return point, value, regularizer_losses, nfev
         
         
         
