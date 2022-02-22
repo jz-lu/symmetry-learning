@@ -107,7 +107,7 @@ class PQC:
         """
         qubits = QuantumRegister(self.L)
         Q_th = QuantumCircuit(qubits) if Q_th is None else Q_th
-        assert p.shape[0] == self.n_param
+        assert p.shape[0] == self.n_param, f"Expected param shape {self.n_param}, got {p.shape[0]}"
         p = t.reshape(p, (self.L, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH))
         if type(p).__module__ == t.__name__:
             p = p.clone().cpu().detach().numpy()
