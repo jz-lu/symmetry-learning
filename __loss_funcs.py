@@ -23,7 +23,7 @@ def SymKL(P, Q, eps=1e-7):
     """Symmetrized KL divergence on two discrete distributions"""
     return 1/2 * (KL(P, Q, eps) + KL(Q, P, eps))
 
-def Em_MMD(x, y, s):
+def Em_MMD(x, y, s=1):
     """Empirical (sample) MMD loss function with width parameter s"""
     assert len(x) == len(y), f"Samples x and y differ in size: {len(x)} vs {len(y)}"
     n = len(x)

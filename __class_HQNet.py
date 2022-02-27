@@ -48,7 +48,7 @@ class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
                  reg_scale=3, depth=0, estimate=False, poly=None, s_eps=100,
-                 noise=0, state_prep_circ=None, error_prob=0.01
+                 noise=0, state_prep_circ=None, error_prob=0.01, ops=None,
                  ):
         """
         Use a quantumfication of loss metric `metric_func` 
@@ -83,7 +83,8 @@ class HQNet:
                         state_prep_circ=state_prep_circ,
                         error_prob=error_prob,
                         poly=poly,
-                        say_hi=False
+                        say_hi=False, 
+                        ops=ops
                         )
                 for basis in bases]
         self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))

@@ -39,6 +39,10 @@ If `estimate` is True, the loss metric at each basis will be estimated by
 creating `nrun * 2^L` copies of the state, running them through the circuit, and then creating
 an empirical distribution. If `estimate` is False, then the true distribution stored
 in the Qiskit backend will be used instead.
+
+If `metric_samples` is True, then the PQC assumes that the supplied metric function is a 
+sampling-based metric and will supply it with samples instead of a distribution. An example
+if the empirical MMD loss.
 """
 
 class PQC:
@@ -46,7 +50,7 @@ class PQC:
                  metric_func=KL, depth=0, 
                  estimate=False, nrun=100, 
                  noise=0, markovian=False, state_prep_circ=None, error_prob=0.01, 
-                 poly=None, say_hi=True):
+                 poly=None, say_hi=True, ops=None):
         assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
         if noise > 0:
             assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
@@ -63,6 +67,7 @@ class PQC:
         self.markovian = markovian
         self.error_prob = error_prob
         self.n_param = self.L * PARAM_PER_QUBIT_PER_DEPTH * (self.depth + 1)
+        self.ops = ops
             
         if type(basis_param).__module__ == t.__name__:
             self.bp = basis_param.clone().cpu().detach().numpy()
@@ -79,7 +84,7 @@ class PQC:
             if estimate:
                 units = 2**self.L if self.poly is None else self.L**self.poly
                 estimate = np.zeros(2**self.L)
-                for i in range(self.nrun * units):
+                for _ in range(self.nrun * units):
                     estimate[qubit_retraction(state.measure()[0])] += 1
                 self.basis_dist = estimate / (self.nrun * units)
             else:
@@ -93,7 +98,7 @@ class PQC:
             self.evolver = self.__Q_th_noise_2
         
         if say_hi:
-            print(f"Parametrized quantum circuit (noise: {noise}) initialized.")
+            print(f"Parametrized quantum circuit (noise: {noise}{'' if ops is None else ', ops=%d'%ops}) initialized.")
     
     def __make_Q_th(self, p, Q_th=None):
         """
@@ -207,7 +212,10 @@ class PQC:
             distribution = estimate / (self.nrun * units)
         else:
             distribution = state.probabilities()
-        return self.metric(self.basis_dist, distribution)
+        if self.ops is None:
+            return self.metric(self.basis_dist, distribution)
+        else:
+            return self.metric(self.basis_dist, distribution, self.ops)
     
     def true_metric_on_params(self, p_list):
         """Same as `evaluate_true_metric` but over a list of parameters"""
