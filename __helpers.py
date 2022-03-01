@@ -20,7 +20,7 @@ def prepare_basis(L, num=2):
     basis_here = init_basis
     for _ in range(num-1):
         perturbation = basis_here.clone()
-        perturbation[:,npr.randint(0, 3)] += pi/10 * t.ones(L) # small rotation in one axis for each qubit
+        perturbation[:,0] += pi/10 * t.ones(L) # small rotation in one axis for each qubit
         basis_here = basis_here + perturbation
         bases.append(basis_here)
     return bases

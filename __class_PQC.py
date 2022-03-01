@@ -10,7 +10,6 @@ from qiskit import QuantumRegister, QuantumCircuit, transpile
 from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import Statevector
 from qiskit.providers.aer.noise import pauli_error, depolarizing_error
-from qiskit.tools.visualization import plot_histogram
 from qiskit.providers.aer.noise import NoiseModel
 import numpy as np
 import torch as t
@@ -48,9 +47,9 @@ if the empirical MMD loss.
 class PQC:
     def __init__(self, state, basis_param=None, 
                  metric_func=KL, depth=0, 
-                 estimate=False, nrun=100, 
+                 estimate=False, nrun=50, 
                  noise=0, markovian=False, state_prep_circ=None, error_prob=0.01, 
-                 poly=None, say_hi=True, ops=None):
+                 poly=None, say_hi=True, ops=None, sample=False):
         assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
         if noise > 0:
             assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
@@ -68,6 +67,7 @@ class PQC:
         self.error_prob = error_prob
         self.n_param = self.L * PARAM_PER_QUBIT_PER_DEPTH * (self.depth + 1)
         self.ops = ops
+        self.sample = sample
             
         if type(basis_param).__module__ == t.__name__:
             self.bp = basis_param.clone().cpu().detach().numpy()
@@ -78,10 +78,13 @@ class PQC:
         # Obtain distribution of state when measured in the given basis.
         if basis_param is not None:
             self.basis_dist = BasisTransformer([state], basis_param).updated_dist(
-                    estimate=estimate, poly=poly, nrun=nrun
+                    estimate=estimate, poly=poly, nrun=nrun, sample=sample
                 )[0]
         else:
-            if estimate:
+            if estimate and sample:
+                self.basis_dist = np.array([qubit_retraction(state.measure()[0]) for _ \
+                                        in range(2**self.L if self.poly is None else self.L**self.poly)])
+            elif estimate:
                 units = 2**self.L if self.poly is None else self.L**self.poly
                 estimate = np.zeros(2**self.L)
                 for _ in range(self.nrun * units):
@@ -204,7 +207,10 @@ class PQC:
         """
         state = self.evolver(p)
         distribution = None
-        if self.estimate:
+        if self.estimate and self.sample:
+            distribution = np.array([qubit_retraction(state.measure()[0]) for _ \
+                                        in range(2**self.L if self.poly is None else self.L**self.poly)])
+        elif self.estimate:
             units = 2**self.L if self.poly is None else self.L**self.poly
             estimate = np.zeros(2**self.L)
             for _ in range(self.nrun * units):

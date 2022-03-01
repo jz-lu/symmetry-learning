@@ -30,7 +30,7 @@ def Em_MMD(x, y, s=1):
     return sum([Gaussian(x[i], x[j], s) + Gaussian(y[i], y[j], s) - \
            2*Gaussian(x[i], y[j], s) for i in range(n) for j in range(n)]) / n**2
 
-def MMD(P, Q, n=101, s=1):
+def MMD(P, Q, s=1, n=30):
     """
     Define the MMD loss over distributions as a random variable obtained by sampling
     from the distributions and computing the empirical MMD over the samples.
