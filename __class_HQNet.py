@@ -16,6 +16,8 @@ from qiskit.algorithms.optimizers import (
     NELDER_MEAD, NFT, SPSA, TNC, 
     ESCH, ISRES, DIRECT_L
 )
+#from qiskit.algorithms.optimizers.nlopts.nloptimizer.NLoptOptimizer import CRS
+#from __class_GradientDescent import GradientDescent
 import torch as t
 from math import pi
 
@@ -32,7 +34,7 @@ specifying an invalid option.
 """
 
 class HQNet:
-    def __init__(self, state, bases, eta=1e-2, maxiter=1000,
+    def __init__(self, state, bases, eta, maxiter,
                  metric_func=KL, mode=Q_MODE_ADAM, regularize=False, disp=False,
                  reg_scale=3, depth=0):
         """
@@ -67,7 +69,7 @@ class HQNet:
         # Choose an algorithm including local (no predix)
         # and global (prefixed with g-) search algorithms on qiskit.
         if self.mode == Q_MODE_ADAM:
-            self.optimizer = ADAM(lr=eta)
+            self.optimizer = ADAM(tol = 0.1,lr=eta)
         elif self.mode == Q_MODE_GD:
             self.optimizer = GradientDescent(maxiter=maxiter, learning_rate=eta)
         elif self.mode == Q_MODE_NM:
@@ -137,7 +139,8 @@ class HQNet:
         classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
         classical_loss_tensor[:,1] = t.tensor([cnet.run_then_enq(p)
                                                 for p, cnet in zip(p_tens, self.CNets)]) # estimated metric
-        
+        #if self.mode == Q_MODE_ADAM:
+        return p_vec.sum().item()
         return self.__quantum_loss_metric(classical_loss_tensor)
     
     def find_potential_symmetry(self, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
@@ -162,6 +165,7 @@ class HQNet:
         ? want it to extrapolate well. That's the point of regularizing.)
         """
         theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
+        print("look here", theta_0)
         n_param = theta_0.shape[0]
         bounds = [(0, 2*pi)] * n_param
 

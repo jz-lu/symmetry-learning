@@ -2,6 +2,9 @@ import torch as t
 import numpy as np
 from torch.linalg import eig
 
+
+
+
 '''Device where we are running'''
 #defining the device
 if t.cuda.is_available():
