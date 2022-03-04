@@ -1,5 +1,5 @@
 # Parameterizations
-PARAM_PER_QUBIT_PER_DEPTH = 2
+PARAM_PER_QUBIT_PER_DEPTH = 3
 
 # * HQNet constants
 SAMPLING_DENSITY = 200

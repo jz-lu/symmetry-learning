@@ -169,7 +169,7 @@ class HQNet:
         
         return self.__quantum_loss_metric(classical_loss_tensor)
     
-    def find_potential_symmetry(self, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
+    def find_potential_symmetry(self, x0=None, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
         """
         Run the optimization algorithm to obtain the maximally symmetric
         parameter, regularizing with the CNet. Train the CNet in parallel.
@@ -185,7 +185,8 @@ class HQNet:
         
         RETURNS: proposed symmetry
         """
-        theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
+        theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze() \
+            if x0 is None else x0
         n_param = theta_0.shape[0]
         bounds = [(0, 2*pi)] * n_param
 
