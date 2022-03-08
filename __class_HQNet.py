@@ -89,7 +89,7 @@ class HQNet:
                         sample=sample
                         )
                 for basis in bases]
-        self.regloss = lambda x: reg_scale * np.tanh(1/((x[0]-x[1])**2))
+        self.regloss = lambda x: reg_scale * (2 * (1/(1 + np.exp(-1/np.float_power((x[0]-x[1])**2, 1/10))) - 1/2))
         self.qloss = lambda x: x[0] + self.regloss(x)
         self.num_bases = len(bases)
         self.n_param = (self.depth + 1) * PARAM_PER_QUBIT_PER_DEPTH * self.L
@@ -165,8 +165,11 @@ class HQNet:
             p_tens[i,:-1] = p_vec.clone()
         classical_loss_tensor = t.zeros((self.num_bases, 2))
         classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
+        p_tens[:,-1] = classical_loss_tensor[:,0]
         classical_loss_tensor[:,1] = t.tensor([cnet.run_then_enq(p)
                                                 for p, cnet in zip(p_tens, self.CNets)]) # estimated metric
+        # print(classical_loss_tensor)
+        # print(f"Loss = {self.__quantum_loss_metric(classical_loss_tensor)}")
         
         return self.__quantum_loss_metric(classical_loss_tensor)
     
@@ -203,16 +206,16 @@ class HQNet:
                                                      self.param_to_quantum_loss, 
                                                      initial_point=theta_0, 
                                                      variable_bounds=bounds)
+        
+        if print_log:
+            print(f"Optimized to QKL = {value}")
+            print(f"Queried loss func {nfev} times")
 
         regularizer_losses = None
         if self.regularize:
             regularizer_losses = self.param_to_regloss(point)
             [cnet.flush_q(nepoch=reg_nepoch, 
                           eta=reg_eta) for cnet in self.CNets]
-        
-        if print_log:
-            print(f"Optimized to QKL = {value}")
-            print(f"Queried loss func {nfev} times")
         return point, value, regularizer_losses
         
         

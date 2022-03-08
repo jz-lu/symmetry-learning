@@ -73,6 +73,7 @@ class CNet(nn.Module):
         """
         true_metric = train_data[:,-1] # True metric value
         sz = train_data.size(0)
+        print(f"[CNet] Training {sz} points...")
         self.optimizer = t.optim.Adam(self.model.parameters(), lr=eta)
         self.losses = np.zeros(nepoch // loss_window)
         local_losses = [0] * loss_window
@@ -134,6 +135,7 @@ class CNet(nn.Module):
         """
         assert len(datum.shape) == 1
         self.train_q.append(datum.numpy())
+        # print(f"Pred = {self.run(datum[:-1])}, Actual = {datum[-1]}")
         return self.run(datum[:-1])
         
     def flush_q(self, nepoch=2000, eta=1e-2, loss_window=10, print_log=False):
