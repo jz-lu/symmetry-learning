@@ -89,7 +89,7 @@ class HQNet:
                         sample=sample
                         )
                 for basis in bases]
-        self.regloss = lambda x: reg_scale * (2 * (1/(1 + np.exp(-1/np.float_power((x[0]-x[1])**2, 1/10))) - 1/2))
+        self.regloss = lambda x: reg_scale * (2 * (1/(1 + 2*np.exp(-1/(2.5*np.float_power((x[0]-x[1])**2, 1/10)))) - 1/2))**2
         self.qloss = lambda x: x[0] + self.regloss(x)
         self.num_bases = len(bases)
         self.n_param = (self.depth + 1) * PARAM_PER_QUBIT_PER_DEPTH * self.L
@@ -179,6 +179,9 @@ class HQNet:
         classical_loss_tensor = t.zeros((self.num_bases, 2))
         classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
         classical_loss_tensor[:,1] = t.tensor([cnet.run(p_vec) for cnet in self.CNets])
+        print(f"True QKL\'s = {classical_loss_tensor[:,0]}")
+        print(f"Predicted QKL\'s = {classical_loss_tensor[:,1]}")
+        print(f"MSE = {np.square(classical_loss_tensor[:,0] - classical_loss_tensor[:,1])}")
         return np.sum(np.apply_along_axis(self.regloss, 1, classical_loss_tensor.numpy()), 0)
     
     def find_potential_symmetry(self, x0=None, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
@@ -208,7 +211,7 @@ class HQNet:
                                                      variable_bounds=bounds)
         
         if print_log:
-            print(f"Optimized to QKL = {value}")
+            print(f"Optimized to loss metric = {value}")
             print(f"Queried loss func {nfev} times")
 
         regularizer_losses = None
