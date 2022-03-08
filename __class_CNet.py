@@ -148,4 +148,9 @@ class CNet(nn.Module):
                           print_log=print_log)
         self.train_q = [] # clear the queue
         return losses
-        
+
+    def kill_q(self):
+        """
+        Empty queue without training.
+        """
+        self.train_q = [] # clear the queue

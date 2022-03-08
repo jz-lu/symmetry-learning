@@ -9,6 +9,7 @@ from ___constants import (
     NOISE_OPS
 )
 from __loss_funcs import KL
+from __helpers import param_to_unitary
 from __class_CNet import CNet
 from __class_PQC import PQC
 import numpy as np
@@ -49,7 +50,7 @@ class HQNet:
                  metric_func=KL, mode=Q_MODE_NM, regularize=False, disp=False,
                  reg_scale=3, depth=0, estimate=False, poly=None, s_eps=50,
                  noise=0, state_prep_circ=None, error_prob=0.01, ops=None,
-                 sample=False
+                 sample=False, jump=False, checkpoint=300
                  ):
         """
         Use a quantumfication of loss metric `metric_func` 
@@ -64,8 +65,13 @@ class HQNet:
         if noise > 0:
             assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
         
-        maxiter = int(maxiter)
+        maxiter = self.maxiter = int(maxiter)
+        self.checkpoint = checkpoint
+        if jump:
+            maxiter = checkpoint
         self.regularize = regularize
+        self.jump = jump
+        assert not(regularize and jump), "Cannot regularize and jump: choose one"
         self.mode = mode
         self.depth = depth
         self.L = state.num_qubits
@@ -145,7 +151,7 @@ class HQNet:
         """
         return self.PQCs[0].get_circ(t.zeros(self.n_param))
         
-    def param_to_quantum_loss(self, p_vec):
+    def get_classical_loss(self, p_vec):
         """
         Function mapping a parameter to the quantum loss.
         `p_vec` is a vectorized parametrization (size: dim theta) of the PQC.
@@ -171,7 +177,19 @@ class HQNet:
         # print(classical_loss_tensor)
         # print(f"Loss = {self.__quantum_loss_metric(classical_loss_tensor)}")
         
+        return classical_loss_tensor
+    
+    def param_to_quantum_loss(self, p_vec):
+        classical_loss_tensor = self.get_classical_loss(p_vec)
         return self.__quantum_loss_metric(classical_loss_tensor)
+    
+    def param_to_jump_indicator(self, p_vec, thres=0.01):
+        """Returns True if the CNet predicts it well enough"""
+        classical_loss_tensor = self.get_classical_loss(p_vec).numpy()
+        mse = (classical_loss_tensor[:,0]-classical_loss_tensor[:,1])**2
+        # print(f"CLT = {classical_loss_tensor}")
+        # print(f"Jump MSE = {mse}")
+        return np.mean(mse) < thres
     
     def param_to_regloss(self, p_vec):
         assert self.regularize, "Must use regularizer to call this function"
@@ -205,19 +223,38 @@ class HQNet:
         n_param = theta_0.shape[0]
         bounds = [(0, 2*pi)] * n_param
 
-        point, value, nfev = self.optimizer.optimize(n_param, 
-                                                     self.param_to_quantum_loss, 
-                                                     initial_point=theta_0, 
-                                                     variable_bounds=bounds)
+        if self.jump:
+            njump = 0
+            for _ in range(self.maxiter // self.checkpoint):
+                point, value, nfev = self.optimizer.optimize(n_param, 
+                                                            self.param_to_quantum_loss, 
+                                                            initial_point=theta_0, 
+                                                            variable_bounds=bounds)
+                if nfev < self.checkpoint:
+                    break # optimization done
+                if self.param_to_jump_indicator(point):
+                    theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze()
+                    njump += 1
+                    unitary = param_to_unitary(theta_0.numpy().reshape((self.L, 
+                                                                        PARAM_PER_QUBIT_PER_DEPTH)))
+                    print(f"Jumped to: \n{unitary}\n")
+            print(f"Jumped {njump} times")
+        else:
+            point, value, nfev = self.optimizer.optimize(n_param, 
+                                                        self.param_to_quantum_loss, 
+                                                        initial_point=theta_0, 
+                                                        variable_bounds=bounds)
         
         if print_log:
             print(f"Optimized to loss metric = {value}")
             print(f"Queried loss func {nfev} times")
 
-        regularizer_losses = None
-        if self.regularize:
-            regularizer_losses = self.param_to_regloss(point)
+        regularizer_losses = self.param_to_regloss(point) if self.regularize else None
+        if self.regularize or self.jump:
             [cnet.flush_q(nepoch=reg_nepoch, 
+                          eta=reg_eta) for cnet in self.CNets]
+        else:
+            [cnet.kill_q(nepoch=reg_nepoch, 
                           eta=reg_eta) for cnet in self.CNets]
         return point, value, regularizer_losses
         

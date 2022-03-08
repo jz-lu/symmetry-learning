@@ -28,3 +28,15 @@ def prepare_basis(L, num=2):
 def rand_basis(L):
     """Returns a random basis choice parametrized by (theta, phi, lambda) for L qubits"""
     return (2 * pi * t.rand(3)).repeat((L, 1))
+
+def param_to_unitary(param):
+    assert len(param.shape) == 2, "Function incompatible with circuit depth > 0"
+    L = param.shape[0]
+    unitaries = np.zeros((L, 2, 2), dtype=np.complex_)
+    for i in range(L):
+        theta, phi, lamb = param[i]
+        unitaries[i,0,0] = np.cos(theta/2)
+        unitaries[i,0,1] = -np.exp(1j*lamb) * np.sin(theta/2)
+        unitaries[i,1,0] = np.exp(1j*phi) * np.sin(theta/2)
+        unitaries[i,1,1] = np.exp(1j*(lamb+phi)) * np.cos(theta/2)
+    return unitaries
