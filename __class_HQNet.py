@@ -89,7 +89,8 @@ class HQNet:
                         sample=sample
                         )
                 for basis in bases]
-        self.qloss = lambda x: x[0] + reg_scale * np.tanh(1/((x[0]-x[1])**2))
+        self.regloss = lambda x: reg_scale * np.tanh(1/((x[0]-x[1])**2))
+        self.qloss = lambda x: x[0] + self.regloss(x)
         self.num_bases = len(bases)
         self.n_param = (self.depth + 1) * PARAM_PER_QUBIT_PER_DEPTH * self.L
         
@@ -169,6 +170,14 @@ class HQNet:
         
         return self.__quantum_loss_metric(classical_loss_tensor)
     
+    def param_to_regloss(self, p_vec):
+        assert self.regularize, "Must use regularizer to call this function"
+        p_vec = p_vec if t.is_tensor(p_vec) else t.from_numpy(p_vec)
+        classical_loss_tensor = t.zeros((self.num_bases, 2))
+        classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
+        classical_loss_tensor[:,1] = t.tensor([cnet.run(p_vec) for cnet in self.CNets])
+        return np.sum(np.apply_along_axis(self.regloss, 1, classical_loss_tensor.numpy()), 0)
+    
     def find_potential_symmetry(self, x0=None, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
         """
         Run the optimization algorithm to obtain the maximally symmetric
@@ -186,7 +195,7 @@ class HQNet:
         RETURNS: proposed symmetry
         """
         theta_0 = self.PQCs[0].gen_rand_data(1, include_metric=False).squeeze() \
-            if x0 is None else x0
+            if x0 is None else t.tensor(x0)
         n_param = theta_0.shape[0]
         bounds = [(0, 2*pi)] * n_param
 
@@ -197,9 +206,9 @@ class HQNet:
 
         regularizer_losses = None
         if self.regularize:
-            regularizer_losses = [cnet.flush_q(
-                                                nepoch=reg_nepoch, 
-                                                eta=reg_eta) for cnet in self.CNets]
+            regularizer_losses = self.param_to_regloss(point)
+            [cnet.flush_q(nepoch=reg_nepoch, 
+                          eta=reg_eta) for cnet in self.CNets]
         
         if print_log:
             print(f"Optimized to QKL = {value}")

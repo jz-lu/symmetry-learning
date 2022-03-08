@@ -1,3 +1,4 @@
+from tokenize import Double
 from ___constants import CNET_CONV_NCHAN, CNET_HIDDEN_DIM, PARAM_PER_QUBIT_PER_DEPTH
 import torch as t
 import torch.nn as nn
@@ -41,6 +42,7 @@ class CNet(nn.Module):
         * Parametrization-dependent function.
         """
         x = param.view(-1, self.num_qubits, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH)
+        x = x.float()
         x = t.unsqueeze(x, 1) # to give CNN the trivial 1-input channel
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
@@ -131,14 +133,14 @@ class CNet(nn.Module):
         for training. The queue is trained as a batch when desired.
         """
         assert len(datum.shape) == 1
-        self.train_q.append(datum)
+        self.train_q.append(datum.numpy())
         return self.run(datum[:-1])
         
     def flush_q(self, nepoch=2000, eta=1e-2, loss_window=10, print_log=False):
         """
         Flush the training queue by training it all as a batch.
         """
-        losses = self.train(np.array(self.train_q), 
+        losses = self.train(t.tensor(np.array(self.train_q)), 
                           nepoch=nepoch, eta=eta, 
                           loss_window=loss_window, 
                           print_log=print_log)
