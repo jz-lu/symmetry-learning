@@ -73,7 +73,6 @@ class CNet(nn.Module):
         """
         true_metric = train_data[:,-1] # True metric value
         sz = train_data.size(0)
-        print(f"[CNet] Training {sz} points...")
         self.optimizer = t.optim.Adam(self.model.parameters(), lr=eta)
         self.losses = np.zeros(nepoch // loss_window)
         local_losses = [0] * loss_window

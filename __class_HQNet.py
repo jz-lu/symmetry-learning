@@ -191,12 +191,14 @@ class HQNet:
         # print(f"Jump MSE = {mse}")
         return np.mean(mse) < thres
     
+    def param_to_regval(self, p_vec):
+        classical_loss_tensor = self.get_classical_loss(p_vec).numpy()
+        mse = (classical_loss_tensor[:,0]-classical_loss_tensor[:,1])**2
+        return mse
+    
     def param_to_regloss(self, p_vec):
         assert self.regularize, "Must use regularizer to call this function"
-        p_vec = p_vec if t.is_tensor(p_vec) else t.from_numpy(p_vec)
-        classical_loss_tensor = t.zeros((self.num_bases, 2))
-        classical_loss_tensor[:,0] = t.tensor([qc.evaluate_true_metric(p_vec) for qc in self.PQCs])
-        classical_loss_tensor[:,1] = t.tensor([cnet.run(p_vec) for cnet in self.CNets])
+        classical_loss_tensor = self.get_classical_loss(p_vec)
         print(f"True QKL\'s = {classical_loss_tensor[:,0]}")
         print(f"Predicted QKL\'s = {classical_loss_tensor[:,1]}")
         print(f"MSE = {np.square(classical_loss_tensor[:,0] - classical_loss_tensor[:,1])}")
@@ -237,7 +239,6 @@ class HQNet:
                     njump += 1
                     unitary = param_to_unitary(theta_0.numpy().reshape((self.L, 
                                                                         PARAM_PER_QUBIT_PER_DEPTH)))
-                    print(f"Jumped to: \n{unitary}\n")
             print(f"Jumped {njump} times")
         else:
             point, value, nfev = self.optimizer.optimize(n_param, 
@@ -249,10 +250,12 @@ class HQNet:
             print(f"Optimized to loss metric = {value}")
             print(f"Queried loss func {nfev} times")
 
-        regularizer_losses = self.param_to_regloss(point) if self.regularize else None
+        regularizer_losses = None
         if self.regularize or self.jump:
             [cnet.flush_q(nepoch=reg_nepoch, 
                           eta=reg_eta) for cnet in self.CNets]
+            regularizer_losses = self.param_to_regloss(point) if self.regularize \
+                                                else self.param_to_regval(point)
         else:
             [cnet.kill_q(nepoch=reg_nepoch, 
                           eta=reg_eta) for cnet in self.CNets]
