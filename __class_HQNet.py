@@ -204,7 +204,8 @@ class HQNet:
         print(f"MSE = {np.square(classical_loss_tensor[:,0] - classical_loss_tensor[:,1])}")
         return np.sum(np.apply_along_axis(self.regloss, 1, classical_loss_tensor.numpy()), 0)
     
-    def find_potential_symmetry(self, x0=None, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
+    def find_potential_symmetry(self, x0=None, print_log=True, 
+                                reg_eta=1e-2, reg_nepoch=2000, include_nfev=False):
         """
         Run the optimization algorithm to obtain the maximally symmetric
         parameter, regularizing with the CNet. Train the CNet in parallel.
@@ -259,6 +260,8 @@ class HQNet:
         else:
             [cnet.kill_q(nepoch=reg_nepoch, 
                           eta=reg_eta) for cnet in self.CNets]
+        if include_nfev:
+            return point, value, nfev
         return point, value, regularizer_losses
         
         

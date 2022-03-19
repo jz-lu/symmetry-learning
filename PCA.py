@@ -31,7 +31,7 @@ def dprint(msg):
     if args.verbose:
         print(msg)
 
-CIRCUIT_DEPTH = 1 # Depth of the parameterized quantum circuit
+CIRCUIT_DEPTH = args.depth
 NUM_QUBITS = args.L
 NUM_BASES = args.bases
 USE_REGULARIZER = args.reg
@@ -65,13 +65,13 @@ param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
 param_dim = np.prod(param_shape)
 proposed_syms = t.zeros((NRUN, param_dim))
 
-avg = 0
+losses = np.zeros(NRUN)
 for i in range(NRUN):
-    potential_sym, loss, regularizer_loss = hqn.find_potential_symmetry(print_log=args.verbose)
+    potential_sym, losses[i], _ = hqn.find_potential_symmetry(print_log=args.verbose)
     proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
     potential_sym = potential_sym.reshape(param_shape)
-    avg += loss / NRUN
-print(f"\nAverage loss: {avg}")
+print(f"\nAverage loss: {np.mean(losses)}, stdev: {np.std(losses)}")
+np.save(OUTDIR + 'losses.npy', losses)
 
 # Pushforward from parameter space to SU(2)^((x) 3)
 unitaries_prods = np.array([np.around(

@@ -2,4 +2,99 @@
 Analyze the loss-functional query complexity over number of
 qubits for the L-GHZ state, L-XY states.
 """
+from __helpers import prepare_basis, param_to_unitary
+from ___constants import PARAM_PER_QUBIT_PER_DEPTH
+from __loss_funcs import KL
+from __class_BasisTransformer import BasisTransformer
+from __class_PQC import PQC
 from __class_HQNet import HQNet
+import matplotlib.pyplot as plt
+import numpy as np
+import torch as t
+import argparse
+from qiskit.quantum_info import Statevector
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from GHZ_generator import GHZ_state_circuit
+
+parser = argparse.ArgumentParser(description="Determine query complexity over number of qubits")
+parser.add_argument("-d", "--depth", type=int, help='circuit block depth', default=0)
+parser.add_argument("-L", "--L", type=int, help='max number of qubits', default=3)
+parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
+parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
+parser.add_argument("-n", "--nrun", type=int, help='number of runs to average over', default=10)
+parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
+parser.add_argument("state", type=int, help='family of states to learn on', choices=['GHZ', 'XY'])
+args = parser.parse_args()
+
+def dprint(msg):
+    if args.verbose:
+        print(msg)
+
+CIRCUIT_DEPTH = args.depth
+MAX_NUM_QUBITS = args.L
+NUM_BASES = args.bases
+USE_REGULARIZER = False
+LOSS_METRIC = KL
+ESTIMATE = False
+SAMPLE = False
+NOISE_SCALE = 5
+NRUN = args.nrun
+OUTDIR = (args.out + '/') if args.out[-1] != '/' else args.out
+OPS = None # MMD sigma parameter
+STATE_TYPE = args.state
+
+losses = np.zeros((MAX_NUM_QUBITS, NRUN))
+queries = np.zeros((MAX_NUM_QUBITS, NRUN))
+proposed_syms = []
+
+for NUM_QUBITS in range(1, MAX_NUM_QUBITS + 1):
+    print(f"Querying on L = {NUM_QUBITS}")
+    # Prepare state noiselessly
+    if STATE_TYPE == 'GHZ':
+        from GHZ_generator import GHZ_state_circuit
+        state = Statevector.from_int(0, 2**NUM_QUBITS)
+        qc = GHZ_state_circuit(L=NUM_QUBITS)
+        dprint(qc)
+        state = state.evolve(qc)
+    elif STATE_TYPE == 'XY':
+        from XY_generator import xy_ground_state
+        state = Statevector(xy_ground_state(NUM_QUBITS).numpy())
+
+    # Start the HQNet
+    bases = prepare_basis(state.num_qubits, num=NUM_BASES)
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E5, disp=False,
+                mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
+                estimate=ESTIMATE, s_eps=NOISE_SCALE, 
+                metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
+                regularize=USE_REGULARIZER)
+    dprint(f"[L={NUM_QUBITS}] Variational circuit:")
+    if args.verbose:
+        hqn.view_circuit().draw()
+
+    # Find symmetries
+    param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
+    param_dim = np.prod(param_shape)
+    proposed_syms = t.zeros((NRUN, param_dim))
+
+    for i in range(NRUN):
+        potential_sym, losses[NUM_QUBITS-1, i], queries[NUM_QUBITS-1, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
+        proposed_syms.append(potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym))
+        potential_sym = potential_sym.reshape(param_shape)
+    print(f"[L={NUM_QUBITS}] Average loss: {np.mean(losses[NUM_QUBITS])}, stdev: {np.std(losses[NUM_QUBITS])}")
+    
+np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
+np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
+
+# Plot the scaling complexity
+avgs = np.mean(losses, axis=1)
+stdevs = np.std(losses, axis=1)
+x = np.arange(MAX_NUM_QUBITS)+1
+COLOR = 'darkblue'
+
+plt.clf()
+plt.title(f"Query complexity of {STATE_TYPE}")
+plt.plot(x, avgs, c=COLOR)
+plt.fill_between(x, avgs - stdevs, avgs + stdevs, color=COLOR, alpha=0.2)
+plt.savefig(OUTDIR + f"nfev_{STATE_TYPE}.pdf")
+plt.show()
