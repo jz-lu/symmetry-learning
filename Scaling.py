@@ -81,14 +81,15 @@ for NUM_QUBITS in range(1, MAX_NUM_QUBITS + 1):
         potential_sym, losses[NUM_QUBITS-1, i], queries[NUM_QUBITS-1, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
         proposed_syms.append(potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym))
         potential_sym = potential_sym.reshape(param_shape)
-    print(f"[L={NUM_QUBITS}] Average loss: {np.mean(losses[NUM_QUBITS])}, stdev: {np.std(losses[NUM_QUBITS])}")
+    print(f"[L={NUM_QUBITS}] Median loss: {np.median(losses[NUM_QUBITS])}, stdev: {np.std(losses[NUM_QUBITS])}")
+    print(f"[L={NUM_QUBITS}] Mean # queries: {np.mean(queries[NUM_QUBITS])}, stdev: {np.std(queries[NUM_QUBITS])}")
     
 np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
 np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
 
 # Plot the scaling complexity
-avgs = np.mean(losses, axis=1)
-stdevs = np.std(losses, axis=1)
+avgs = np.mean(queries, axis=1)
+stdevs = np.std(queries, axis=1)
 x = np.arange(MAX_NUM_QUBITS)+1
 COLOR = 'darkblue'
 
