@@ -5,8 +5,6 @@ using dimensionality reduction.
 from __helpers import prepare_basis, param_to_unitary
 from ___constants import PARAM_PER_QUBIT_PER_DEPTH
 from __loss_funcs import KL
-from __class_BasisTransformer import BasisTransformer
-from __class_PQC import PQC
 from __class_HQNet import HQNet
 import matplotlib.pyplot as plt
 import numpy as np
