@@ -258,8 +258,7 @@ class HQNet:
             regularizer_losses = self.param_to_regloss(point) if self.regularize \
                                                 else self.param_to_regval(point)
         else:
-            [cnet.kill_q(nepoch=reg_nepoch, 
-                          eta=reg_eta) for cnet in self.CNets]
+            [cnet.kill_q() for cnet in self.CNets]
         if include_nfev:
             return point, value, nfev
         return point, value, regularizer_losses

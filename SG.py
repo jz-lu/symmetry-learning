@@ -45,7 +45,8 @@ scores = np.zeros(NUM_N0)
 state = Statevector.from_int(0, 2**NUM_QUBITS)
 qc = GHZ_state_circuit(L=NUM_QUBITS)
 state = state.evolve(qc)
-dprint("State preparation circuit:\n" + qc)
+dprint("State preparation circuit:")
+dprint(qc)
 
 bases = prepare_basis(state.num_qubits, num=NUM_BASES)
 
@@ -65,7 +66,7 @@ for pj, N0 in enumerate(N0s):
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
-                jump=USE_REGULARIZER, checkpoint=N0)
+                jump=USE_REGULARIZER, checkpoint=int(N0))
         for i in range(2):
             potential_sym, losses[pj,epoch,i], reglosses[pj,epoch,i] = hqn.find_potential_symmetry(print_log=args.verbose)
             proposed_syms[pj,epoch,i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
@@ -83,7 +84,7 @@ np.save(OUTDIR + 'unitaries.npy', unitaries_prods)
 sym_labels = np.zeros((NUM_N0, NEPOCH, 2))
 for pj in range(NUM_N0):
     for epoch, unitary_prod_set in enumerate(unitaries_prods[pj]):
-        sym_labels[pj,epoch] = np.array([classify_sym(unitary_prod) for unitary_prod in unitary_prod_set])
+        sym_labels[pj,epoch] = np.array([classify_sym(np.abs(unitary_prod)) for unitary_prod in unitary_prod_set])
 np.save(OUTDIR + 'labels.npy', sym_labels)
 
 # Compute the score function

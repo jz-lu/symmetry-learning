@@ -17,6 +17,7 @@ from GHZ_generator import GHZ_state_circuit
 
 # Identify each symmetry Type I (diag) or Type II (off-diag)
 def classify_sym(unitary_product):
+    num_qubits = len(unitary_product)
     type_1_points = 0
     type_2_points = 0
     for unitary in unitary_product:
@@ -35,9 +36,9 @@ def classify_sym(unitary_product):
             type_2_points += 1
             continue
     
-    if type_1_points == NUM_QUBITS:
+    if type_1_points == num_qubits:
         return 1 # Certainly Type I
-    elif type_2_points == NUM_QUBITS:
+    elif type_2_points == num_qubits:
         return 2 # Certainly Type II
     elif type_1_points > type_2_points:
         return 3 # Probably Type I
@@ -89,7 +90,8 @@ if __name__ == '__main__':
     state = Statevector.from_int(0, 2**NUM_QUBITS)
     qc = GHZ_state_circuit(L=NUM_QUBITS)
     state = state.evolve(qc)
-    dprint("State preparation circuit:\n" + qc)
+    dprint("State preparation circuit:")
+    dprint(qc)
 
     # Start the HQNet
     bases = prepare_basis(state.num_qubits, num=NUM_BASES)
@@ -99,8 +101,7 @@ if __name__ == '__main__':
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
                 jump=USE_REGULARIZER)
     dprint("Variational circuit:")
-    if args.verbose:
-        hqn.view_circuit().draw()
+    dprint(hqn.view_circuit().draw())
 
     # Find symmetries
     param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
@@ -121,12 +122,14 @@ if __name__ == '__main__':
                                 sym.reshape((NUM_QUBITS, -1)).numpy()), 4) 
                         for sym in proposed_syms])
     np.save(OUTDIR + 'unitaries.npy', unitaries_prods)
+    np.save(OUTDIR + 'thetas.npy', proposed_syms)
         
-    sym_labels = np.array([type_to_color(classify_sym(unitary_prod)) \
+    sym_labels = np.array([type_to_color(classify_sym(np.abs(unitary_prod))) \
                             for unitary_prod in unitaries_prods])
+    np.save(OUTDIR + 'syms_2D_labs.npy', sym_labels)
 
     # Project from the Lie group to 2D space
-    unitary_vecs = StandardScaler().fit_transform(unitaries_prods.reshape((NRUN, -1)))
+    unitary_vecs = StandardScaler().fit_transform(np.abs(unitaries_prods.reshape((NRUN, -1))))
     pca = PCA(n_components=2)
     fit = pca.fit_transform(unitary_vecs)
     explained_variance = pca.explained_variance_ratio_
@@ -134,7 +137,6 @@ if __name__ == '__main__':
 
     # Save the data and plot it
     np.save(OUTDIR + 'syms_2D.npy', fit)
-    np.save(OUTDIR + 'syms_2D_labs.npy', sym_labels)
 
     plt.clf()
     plt.xlabel(r'PC$_1$')
