@@ -14,6 +14,7 @@ from qiskit.quantum_info import Statevector
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from GHZ_generator import GHZ_state_circuit
+from XY_generator import xy_ground_state
 
 # Identify each symmetry Type I (diag) or Type II (off-diag)
 def classify_sym(unitary_product):
@@ -67,6 +68,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--reg", action='store_true', help='use regularizer')
     parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
     parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
+    parser.add_argument("-s", "--state", type=str, choices=['GHZ', 'XY'], help='oracle state', default='GHZ')
     parser.add_argument("nrun", type=int, help='number of symmetries to find')
     args = parser.parse_args()
 
@@ -85,13 +87,17 @@ if __name__ == '__main__':
     NRUN = args.nrun
     OUTDIR = (args.out + '/') if args.out[-1] != '/' else args.out
     OPS = None # MMD sigma parameter
+    PREFIX = f'{NUM_QUBITS}{args.state}-PCA-'
 
     # Prepare state noiselessly
     state = Statevector.from_int(0, 2**NUM_QUBITS)
-    qc = GHZ_state_circuit(L=NUM_QUBITS)
-    state = state.evolve(qc)
-    dprint("State preparation circuit:")
-    dprint(qc)
+    if args.state == 'GHZ':
+        qc = GHZ_state_circuit(L=NUM_QUBITS)
+        state = state.evolve(qc)
+        dprint("State preparation circuit:")
+        dprint(qc)
+    elif args.state == 'XY':
+        state = Statevector(xy_ground_state(NUM_QUBITS).numpy())
 
     # Start the HQNet
     bases = prepare_basis(state.num_qubits, num=NUM_BASES)
@@ -114,19 +120,19 @@ if __name__ == '__main__':
         proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
         potential_sym = potential_sym.reshape(param_shape)
     print(f"\nMedian loss: {np.median(losses)}, stdev: {np.std(losses)}")
-    np.save(OUTDIR + 'losses.npy', losses)
+    np.save(OUTDIR + PREFIX + 'losses.npy', losses)
 
     # Pushforward from parameter space to SU(2)^((x) 3)
     unitaries_prods = np.array([np.around(
                             param_to_unitary(
                                 sym.reshape((NUM_QUBITS, -1)).numpy()), 4) 
                         for sym in proposed_syms])
-    np.save(OUTDIR + 'unitaries.npy', unitaries_prods)
-    np.save(OUTDIR + 'thetas.npy', proposed_syms)
+    np.save(OUTDIR + PREFIX + 'unitaries.npy', unitaries_prods)
+    np.save(OUTDIR + PREFIX + 'thetas.npy', proposed_syms)
         
     sym_labels = np.array([type_to_color(classify_sym(np.abs(unitary_prod))) \
                             for unitary_prod in unitaries_prods])
-    np.save(OUTDIR + 'syms_2D_labs.npy', sym_labels)
+    np.save(OUTDIR + PREFIX + 'syms_2D_labs.npy', sym_labels)
 
     # Project from the Lie group to 2D space
     unitary_vecs = StandardScaler().fit_transform(np.abs(unitaries_prods.reshape((NRUN, -1))))
@@ -136,11 +142,5 @@ if __name__ == '__main__':
     print(f"PCA explained variance ratio = {explained_variance}")
 
     # Save the data and plot it
-    np.save(OUTDIR + 'syms_2D.npy', fit)
-
-    plt.clf()
-    plt.xlabel(r'PC$_1$')
-    plt.ylabel(r'PC$_2$')
-    plt.scatter(fit[:,0], fit[:,1], sym_labels)
-    plt.savefig(OUTDIR + 'syms_2D.pdf')
-    plt.show()
+    np.save(OUTDIR + PREFIX + 'syms_2D.npy', fit)
+    print("All done mate!")
