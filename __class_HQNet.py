@@ -126,8 +126,8 @@ class HQNet:
             self.optimizer = DIRECT_L(max_evals=maxiter)
         else:
             raise TypeError(f'Invalid choice of algorithm: {self.mode}')
-        
-        print(f"{self.L}-qubit (noise: {noise}) {'non-' if not regularize else ''}regularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
+        if disp:
+            print(f"{self.L}-qubit (noise: {noise}) {'non-' if not regularize else ''}regularized '{self.mode}' hybrid quantum net initialized -- Hello world!")
     
     def __quantum_loss_metric(self, classical_loss_tensor):
         """
@@ -240,7 +240,8 @@ class HQNet:
                     njump += 1
                     unitary = param_to_unitary(theta_0.numpy().reshape((self.L, 
                                                                         PARAM_PER_QUBIT_PER_DEPTH)))
-            print(f"Jumped {njump} times")
+            if print_log:
+                print(f"Jumped {njump} times")
         else:
             point, value, nfev = self.optimizer.optimize(n_param, 
                                                         self.param_to_quantum_loss, 

@@ -15,12 +15,13 @@ from GHZ_generator import GHZ_state_circuit
 
 parser = argparse.ArgumentParser(description="Determine query complexity over number of qubits")
 parser.add_argument("-d", "--depth", type=int, help='circuit block depth', default=0)
-parser.add_argument("-L", "--L", type=int, help='max number of qubits', default=3)
+parser.add_argument("-L", "--L", type=int, help='max number of qubits', default=10)
+parser.add_argument("--Lmin", type=int, help='min number of qubits', default=1)
 parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
 parser.add_argument("-n", "--nrun", type=int, help='number of runs to average over', default=10)
 parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
-parser.add_argument("state", type=int, help='family of states to learn on', choices=['GHZ', 'XY'])
+parser.add_argument("state", type=str, help='family of states to learn on', choices=['GHZ', 'XY'])
 args = parser.parse_args()
 
 def dprint(msg):
@@ -44,7 +45,7 @@ losses = np.zeros((MAX_NUM_QUBITS, NRUN))
 queries = np.zeros((MAX_NUM_QUBITS, NRUN))
 proposed_syms = []
 
-for NUM_QUBITS in range(1, MAX_NUM_QUBITS + 1):
+for NUM_QUBITS in range(args.Lmin, MAX_NUM_QUBITS + 1):
     print(f"Querying on L = {NUM_QUBITS}")
     # Prepare state noiselessly
     if STATE_TYPE == 'GHZ':
@@ -75,13 +76,14 @@ for NUM_QUBITS in range(1, MAX_NUM_QUBITS + 1):
 
     for i in range(NRUN):
         potential_sym, losses[NUM_QUBITS-1, i], queries[NUM_QUBITS-1, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
-        proposed_syms.append(potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym))
+        proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
         potential_sym = potential_sym.reshape(param_shape)
-    print(f"[L={NUM_QUBITS}] Median loss: {np.median(losses[NUM_QUBITS])}, stdev: {np.std(losses[NUM_QUBITS])}")
-    print(f"[L={NUM_QUBITS}] Mean # queries: {np.mean(queries[NUM_QUBITS])}, stdev: {np.std(queries[NUM_QUBITS])}")
+    print(f"[L={NUM_QUBITS}] Median loss: {np.median(losses[NUM_QUBITS-1])}, stdev: {np.std(losses[NUM_QUBITS-1])}")
+    print(f"[L={NUM_QUBITS}] Mean # queries: {np.mean(queries[NUM_QUBITS-1])}, stdev: {np.std(queries[NUM_QUBITS-1])}")
     
 np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
 np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
+np.save(OUTDIR + f'syms_{STATE_TYPE}.npy', proposed_syms)
 
 # Plot the scaling complexity
 avgs = np.mean(queries, axis=1)
@@ -94,4 +96,3 @@ plt.title(f"Query complexity of {STATE_TYPE}")
 plt.plot(x, avgs, c=COLOR)
 plt.fill_between(x, avgs - stdevs, avgs + stdevs, color=COLOR, alpha=0.2)
 plt.savefig(OUTDIR + f"nfev_{STATE_TYPE}.pdf")
-plt.show()

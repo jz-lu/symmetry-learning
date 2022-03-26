@@ -22,7 +22,7 @@ Currently, the metric we use is the: KL Divergence.
 """
 
 class CNet(nn.Module):
-    def __init__(self, num_qubits, depth=0):
+    def __init__(self, num_qubits, depth=0, disp=False):
         super(CNet, self).__init__() # initialize torch nn
         self.depth = depth
         self.conv1 = nn.Conv3d(1, CNET_CONV_NCHAN, (1,1,PARAM_PER_QUBIT_PER_DEPTH))
@@ -35,7 +35,8 @@ class CNet(nn.Module):
         self.loss_func = nn.MSELoss()
         self.num_qubits = num_qubits
         self.train_q = []
-        print(f"Classical deep net of circuit depth {self.depth} initialized.")
+        if disp:
+            print(f"Classical deep net of circuit depth {self.depth} initialized.")
     
     def forward(self, param):
         """

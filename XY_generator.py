@@ -45,7 +45,7 @@ class XY:
         self.get_H()
     
     '''Do not call outside constructor'''
-    def get_H(self): 
+    def get_H(self):
         self.H = t.zeros((2**self.L, 2**self.L), dtype=t.cfloat).to(device)
         for i in range(self.L): 
             self.H += add_op([Sz],[self.h], [i], self.L)
