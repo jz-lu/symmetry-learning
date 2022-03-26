@@ -2,7 +2,6 @@
 Display mean and variance of circuit complexity of the 4-qubit cluster
 state, 4-qubit GHZ state, and 4-qubit XY Hamiltonian GS.
 """
-from Scaling import STATE_TYPE
 from __helpers import prepare_basis, param_to_unitary
 from ___constants import PARAM_PER_QUBIT_PER_DEPTH
 from __loss_funcs import KL
@@ -13,14 +12,14 @@ import torch as t
 import argparse
 from qiskit.quantum_info import Statevector
 
-parser = argparse.ArgumentParser(description="Show symmetries of 3-GHZ in 2D DR space")
+parser = argparse.ArgumentParser(description="Compute circuit complexity of a given state")
 parser.add_argument("-d", "--depth", type=int, help='maximum circuit block depth', default=5)
 parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
 parser.add_argument("-r", "--reg", action='store_true', help='use regularizer')
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
 parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
 parser.add_argument("nrun", type=int, help='number of symmetries to find')
-parser.add_argument("state", type=str, choices=['GHZ', 'XY', 'Cluster'])
+parser.add_argument("state", type=str, help='oracle state', choices=['GHZ', 'XY', 'Cluster'])
 args = parser.parse_args()
 
 def dprint(msg):
@@ -74,7 +73,7 @@ for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
                 jump=USE_REGULARIZER)
     dprint(f"[d={CIRCUIT_DEPTH}] Variational circuit:")
     if args.verbose:
-        hqn.view_circuit().draw()
+        print(hqn.view_circuit().draw())
     
     param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
     param_dim = np.prod(param_shape)
