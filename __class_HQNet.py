@@ -140,7 +140,7 @@ class HQNet:
         classical_loss_tensor[:,1] = t.tensor([cnet.run_then_enq(p)
                                                 for p, cnet in zip(p_tens, self.CNets)]) # estimated metric
         #if self.mode == Q_MODE_ADAM:
-        return p_vec.sum().item()
+        #return p_vec.sum().item()
         return self.__quantum_loss_metric(classical_loss_tensor)
     
     def find_potential_symmetry(self, print_log=True, reg_eta=1e-2, reg_nepoch=2000):
