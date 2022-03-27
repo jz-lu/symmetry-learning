@@ -60,7 +60,7 @@ for CIRCUIT_DEPTH in range(MAX_CIRCUIT_DEPTH+1):
     print(f"Querying on d = {CIRCUIT_DEPTH}")
 
     # Start the HQNet
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E5, disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6, disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
@@ -82,8 +82,8 @@ for CIRCUIT_DEPTH in range(MAX_CIRCUIT_DEPTH+1):
     print(f"[d={CIRCUIT_DEPTH}] Mean # queries: {np.mean(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}")
     np.save(OUTDIR + f'syms_{STATE_TYPE}_depth_{CIRCUIT_DEPTH}.npy', proposed_syms)
     
-np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
-np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
+    np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
+    np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
 
 # Plot the scaling complexity
 avgs = np.mean(queries, axis=1)

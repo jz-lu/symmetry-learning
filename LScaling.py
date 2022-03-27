@@ -61,7 +61,7 @@ for QUBIT_IDX in range(QUBIT_RANGE):
 
     # Start the HQNet
     bases = prepare_basis(state.num_qubits, num=NUM_BASES)
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E5, disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6, disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
@@ -83,8 +83,8 @@ for QUBIT_IDX in range(QUBIT_RANGE):
     print(f"[L={NUM_QUBITS}] Mean # queries: {np.mean(queries[QUBIT_IDX])}, stdev: {np.std(queries[QUBIT_IDX])}")
     np.save(OUTDIR + f'syms_{STATE_TYPE}_L_{NUM_QUBITS}.npy', proposed_syms)
     
-np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
-np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
+    np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
+    np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
 
 # Plot the scaling complexity
 avgs = np.mean(queries, axis=1)

@@ -66,7 +66,7 @@ queries = np.zeros((MAX_DEPTH+1, NRUN))
 
 # Search for symmetries in progressive block depths
 for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E4*(CIRCUIT_DEPTH+1), disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6*(CIRCUIT_DEPTH+1), disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=None, sample=SAMPLE, 
@@ -86,8 +86,8 @@ for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
     print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(losses[CIRCUIT_DEPTH])}, stdev: {np.std(losses[CIRCUIT_DEPTH])}")
     print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}")
 
-np.save(OUTDIR + "losses.npy", losses)
-np.save(OUTDIR + "queries.npy", queries)
+    np.save(OUTDIR + "losses.npy", losses)
+    np.save(OUTDIR + "queries.npy", queries)
 
 # Plot the data as a bar graph
 bottom_95 = round(NRUN * 0.95) # filter bad runs

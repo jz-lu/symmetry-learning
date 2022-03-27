@@ -62,16 +62,17 @@ unitaries_prods = np.zeros((NUM_N0, NEPOCH, 2, NUM_QUBITS, 2, 2)) # |N0| x epoch
 for pj, N0 in enumerate(N0s):
     for epoch in range(NEPOCH):
         # Reset the HQNet
+        x0 = np.array([6.2832, 4.6871, 1.5150, 6.2832, 6.8319, 1.4635, 6.2832, 7.3298, 2.4352]) # diag
         hqn = HQNet(state, bases, eta=1e-2, maxiter=1E4, disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
                 jump=USE_REGULARIZER, checkpoint=int(N0))
         for i in range(2):
-            potential_sym, losses[pj,epoch,i], reglosses[pj,epoch,i] = hqn.find_potential_symmetry(print_log=args.verbose)
+            potential_sym, losses[pj,epoch,i], reglosses[pj,epoch,i] = hqn.find_potential_symmetry(print_log=args.verbose, x0=x0)
             proposed_syms[pj,epoch,i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
             
-            # Pushforward from parameter space to SU(2)^((x) 3)
+            # Pushforward from parameter space to U(2)^((x) 3)
             unitaries_prods[pj,epoch,i] = param_to_unitary(proposed_syms[pj,epoch,i].reshape((NUM_QUBITS, -1)).numpy())
             
     print(f"[N0={N0}] Median loss: {np.median(losses[pj])}, stdev: {np.std(losses[pj])}")
@@ -88,9 +89,9 @@ for pj in range(NUM_N0):
 np.save(OUTDIR + 'labels.npy', sym_labels)
 
 # Compute the score function
-for pj in range(NUM_N0):
+for pj, label in enumerate(sym_labels):
     score = 0
-    for m1, m2 in sym_labels:
+    for m1, m2 in label:
         if (m1 in [1,3] and m2 in [2,4]) or (m2 in [1,3] and m1 in [2,4]):
             score += 1
     scores[pj] = score / NEPOCH
