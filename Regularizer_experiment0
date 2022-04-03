@@ -362,7 +362,7 @@ for i in range(2):
         finder = SymFinder(0.01, 0.01, lr2 = lr, gradient_step2 = gs)
         finder.train()
         for k in range(len(finder.known_symmetries)):
-            data[i,j,k,: ,: ] = finder.known_symmetries[k]
+            data[i,j,k % 100,: ,: ] = finder.known_symmetries[k]
 
 torch.save(data, 'regularizer_data.pt')
 
