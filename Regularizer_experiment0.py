@@ -353,8 +353,8 @@ def matrix(p):
 data = torch.ones(10, 10, 100, 3, 3)
 
 
-for i in range(2):
-    for j in range(2):
+for i in range(10):
+    for j in range(10):
         lr = (i+1) * 0.1
         gs = (j+1) * 0.01
         finder = SymFinder(0.01, 0.01, lr2 = lr, gradient_step2 = gs)
@@ -365,7 +365,7 @@ for i in range(2):
 torch.save(data, 'regularizer_data.pt')
 
 
-  
+
   
 
   
