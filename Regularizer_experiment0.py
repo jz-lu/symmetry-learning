@@ -4,14 +4,14 @@ from __loss_funcs import KL
 from __class_BasisTransformer import BasisTransformer
 from __class_PQC import PQC
 from __class_HQNet import HQNet
-import matplotlib.pyplot as plt
+
 import numpy as np
 from math import pi
 from qiskit.quantum_info import Statevector
 
 
 # Useful additional packages 
-import matplotlib.pyplot as plt
+
 import numpy as np
 from math import pi
 
@@ -90,9 +90,7 @@ else:
 param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
 
 # Visualize the distribution
-plt.bar(qubit_expansion(state.num_qubits), state.probabilities())
-plt.title(f"{NUM_QUBITS}-{STATE_TYPE} State Distribution (z-basis)")
-plt.show()
+
 
 
 
