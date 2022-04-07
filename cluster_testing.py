@@ -11,6 +11,11 @@ data = torch.load('regularizer_data.pt')
 print(data.size())
 
 
+for i in range(3):
+    torch.save(data, 'test.pt')
+
+
+
 def matrix(p):
     #p[0,:] = torch.tensor([3.14159, 0,3.1415926])
     u0 = torch.tensor([[torch.cos(p[0,0]/2), -torch.exp(-p[0,2]*1j)*torch.sin(p[0,0]/2)],\

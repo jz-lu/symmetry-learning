@@ -361,8 +361,11 @@ for i in range(10):
         finder.train()
         for k in range(len(finder.known_symmetries)):
             data[i,j,k % 100,: ,: ] = finder.known_symmetries[k]
+        print(i,j)
+        torch.save(data, 'regularizer_data.pt')
 
 torch.save(data, 'regularizer_data.pt')
+
 
 
 
