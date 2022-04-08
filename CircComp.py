@@ -83,11 +83,11 @@ for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
         _, losses[CIRCUIT_DEPTH, i], queries[CIRCUIT_DEPTH, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
        #  proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
     
-    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(losses[CIRCUIT_DEPTH])}, stdev: {np.std(losses[CIRCUIT_DEPTH])}")
-    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}")
+    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(losses[CIRCUIT_DEPTH])}, stdev: {np.std(losses[CIRCUIT_DEPTH])}", flush=True)
+    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}", flush=True)
 
-    np.save(OUTDIR + "losses.npy", losses)
-    np.save(OUTDIR + "queries.npy", queries)
+    np.save(OUTDIR + f"losses_{CIRCUIT_DEPTH}.npy", losses)
+    np.save(OUTDIR + f"queries_{CIRCUIT_DEPTH}.npy", queries)
 
 # Plot the data as a bar graph
 bottom_95 = round(NRUN * 0.95) # filter bad runs
