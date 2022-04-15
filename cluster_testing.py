@@ -6,13 +6,15 @@ from mpl_toolkits import mplot3d
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+ran = np.load('experiment_data.npy')
+print(ran)
+
 data = torch.load('regularizer_data.pt')
 #print(data[0,0,0,:,:])
 print(data.size())
 
 
-for i in range(3):
-    torch.save(data, 'test.pt')
 
 
 
@@ -36,12 +38,14 @@ def diag_or_not(p):
 
 
 def switching_score(symmetries):
-    T = torch.size(0)
+    T = symmetries.size(0)
     count = 0
     for i in range(T-1):
         if diag_or_not(symmetries[i,:,:]) != diag_or_not(symmetries[i+1,:,:]):
             count = count + 1
-    return count / T
+    return ((count / T)+0.000000001)
+
+print(switching_score(data[1,1,:,:,:]))
 
 def plotting_function(x,y):
     i = np.round(x * 10 - 1)
@@ -49,14 +53,29 @@ def plotting_function(x,y):
     print(i,j)
     return switching_score(data[i,j,:,:,:])
 
-x = np.linspace(0.1, 1, 10)
-y = np.linspace(0.01, 0.1, 10)
 
-X, Y = np.meshgrid(x, y)
-Z = plotting_function(X, Y)    
+xs=[]
+ys = []
+zs=[]
+
+for t in range(100):
+    #print(t, t%10, int(t/10))
+    xs.append((t%10)*0.1)
+    ys.append(int(t/10)* 0.01)
+    zs.append(switching_score(data[t%10, int(t/10),:,:,:]))
+    print(t)
+
+
+
 fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.contour3D(X, Y, Z, 50, cmap='binary')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z');
+ax = fig.add_subplot(projection='3d')
+
+ax.scatter(xs, ys, zs)
+
+ax.set_xlabel('Learning Rate')
+ax.set_ylabel('Finite Difference Step Size')
+ax.set_zlabel('Score Function')
+
+plt.show()
+
+np.save('experiment_data.npy', [xs,ys,zs])
