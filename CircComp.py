@@ -7,6 +7,7 @@ from ___constants import PARAM_PER_QUBIT_PER_DEPTH
 from __loss_funcs import KL
 from __class_HQNet import HQNet
 import matplotlib.pyplot as plt
+from math import pi
 import numpy as np
 import torch as t
 import argparse
@@ -18,6 +19,7 @@ parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2
 parser.add_argument("-r", "--reg", action='store_true', help='use regularizer')
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
 parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
+parser.add_argument("-x", "--xbasis", action='store_true', help='measure in x basis')
 parser.add_argument("nrun", type=int, help='number of symmetries to find')
 parser.add_argument("state", type=str, help='oracle state', choices=['GHZ', 'XY', 'Cluster'])
 args = parser.parse_args()
@@ -60,13 +62,13 @@ elif STATE_TYPE == 'Cluster':
     dprint(qc)
     state = state.evolve(qc)
     
-bases = prepare_basis(state.num_qubits, num=NUM_BASES)
+bases = prepare_basis(state.num_qubits, num=NUM_BASES, init=pi/2 if args.xbasis else 0)
 losses = np.zeros((MAX_DEPTH+1, NRUN))
 queries = np.zeros((MAX_DEPTH+1, NRUN))
 
 # Search for symmetries in progressive block depths
 for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6*(CIRCUIT_DEPTH+1), disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E10*(CIRCUIT_DEPTH+1), disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=None, sample=SAMPLE, 

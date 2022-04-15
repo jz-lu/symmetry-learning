@@ -61,7 +61,7 @@ for QUBIT_IDX in range(QUBIT_RANGE):
 
     # Start the HQNet
     bases = prepare_basis(state.num_qubits, num=NUM_BASES)
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6, disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E15, disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 

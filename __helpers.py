@@ -14,12 +14,13 @@ def qubit_retraction(bitstr):
     """Inverse operation to expansion: given bitstring, return decimal"""
     return int(bitstr, 2)
 
-def prepare_basis(L, num=2):
+def prepare_basis(L, num=2, init=0):
     init_basis = t.zeros(L, 3) # z-basis
+    init_basis[:,0] += init * t.ones(L)
     bases = [init_basis]
     basis_here = init_basis
     for _ in range(num-1):
-        perturbation = basis_here.clone()
+        perturbation = t.zeros(L, 3)
         perturbation[:,0] += pi/10 * t.ones(L) # small rotation in one axis for each qubit
         basis_here = basis_here + perturbation
         bases.append(basis_here)

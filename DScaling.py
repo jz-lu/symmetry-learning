@@ -60,7 +60,7 @@ for CIRCUIT_DEPTH in range(MAX_CIRCUIT_DEPTH+1):
     print(f"Querying on d = {CIRCUIT_DEPTH}")
 
     # Start the HQNet
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E6, disp=False,
+    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E15, disp=False,
                 mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
                 estimate=ESTIMATE, s_eps=NOISE_SCALE, 
                 metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
