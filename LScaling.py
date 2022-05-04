@@ -16,7 +16,6 @@ from math import pi
 
 parser = argparse.ArgumentParser(description="Determine query complexity over number of qubits")
 parser.add_argument("-d", "--depth", type=int, help='circuit block depth', default=0)
-parser.add_argument("--Lmin", type=int, help='min number of qubits', default=1)
 parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
 parser.add_argument("-n", "--nrun", type=int, help='number of runs to average over', default=10)
