@@ -87,8 +87,8 @@ for i in range(NRUN):
 print(f"[d={DEPTH}] Median loss: {np.median(losses[DEPTH])}, stdev: {np.std(losses[DEPTH])}", flush=True)
 print(f"[d={DEPTH}] Median loss: {np.median(queries[DEPTH])}, stdev: {np.std(queries[DEPTH])}", flush=True)
 
-np.save(OUTDIR + f"losses_{DEPTH}.npy", losses)
-np.save(OUTDIR + f"queries_{DEPTH}.npy", queries)
+np.save(OUTDIR + f"losses_{DEPTH}_{STATE_TYPE}.npy", losses)
+np.save(OUTDIR + f"queries_{DEPTH}_{STATE_TYPE}.npy", queries)
 
 # Plot the data as a bar graph
 bottom_95 = round(NRUN * 0.95) # filter bad runs
