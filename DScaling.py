@@ -12,22 +12,24 @@ import torch as t
 import argparse
 from qiskit.quantum_info import Statevector
 from GHZ_generator import GHZ_state_circuit
+from math import pi
 
 parser = argparse.ArgumentParser(description="Determine query complexity over circuit depth")
-parser.add_argument("-d", "--depth", type=int, help='maximum circuit block depth', default=5)
 parser.add_argument("-L", "--L", type=int, help='number of qubits', default=5)
 parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
 parser.add_argument("-n", "--nrun", type=int, help='number of runs to average over', default=10)
+parser.add_argument("-x", "--xbasis", action='store_true', help='measure in x basis')
 parser.add_argument("-v", "--verbose", action='store_true', help='display outputs')
 parser.add_argument("state", type=str, help='family of states to learn on', choices=['GHZ', 'XY'])
+parser.add_argument("depth", type=int, help='circuit block depth')
 args = parser.parse_args()
 
 def dprint(msg):
     if args.verbose:
         print(msg)
 
-MAX_CIRCUIT_DEPTH = args.depth
+DEPTH = args.depth
 NUM_QUBITS = args.L
 NUM_BASES = args.bases
 USE_REGULARIZER = False
@@ -51,49 +53,48 @@ elif STATE_TYPE == 'XY':
     from XY_generator import xy_ground_state
     state = Statevector(xy_ground_state(NUM_QUBITS).numpy())
     
-bases = prepare_basis(state.num_qubits, num=NUM_BASES)
+bases = prepare_basis(state.num_qubits, num=NUM_BASES, init=pi/2 if args.xbasis else 0)
 
-losses = np.zeros((MAX_CIRCUIT_DEPTH+1, NRUN))
-queries = np.zeros((MAX_CIRCUIT_DEPTH+1, NRUN))
+losses = np.zeros(NRUN)
+queries = np.zeros(NRUN)
 
-for CIRCUIT_DEPTH in range(MAX_CIRCUIT_DEPTH+1):
-    print(f"Querying on d = {CIRCUIT_DEPTH}")
+print(f"Querying on d = {DEPTH}")
 
-    # Start the HQNet
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E15, disp=False,
-                mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
-                estimate=ESTIMATE, s_eps=NOISE_SCALE, 
-                metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
-                regularize=USE_REGULARIZER)
-    dprint(f"[d={CIRCUIT_DEPTH}] Variational circuit:")
-    if args.verbose:
-        print(hqn.view_circuit().draw())
+# Start the HQNet
+hqn = HQNet(state, bases, eta=1e-2, maxiter=1E15, disp=False,
+            mode='Nelder-Mead', depth=DEPTH, 
+            estimate=ESTIMATE, s_eps=NOISE_SCALE, 
+            metric_func=LOSS_METRIC, ops=OPS, sample=SAMPLE, 
+            regularize=USE_REGULARIZER)
+dprint(f"[d={DEPTH}] Variational circuit:")
+if args.verbose:
+    print(hqn.view_circuit().draw())
 
-    # Find symmetries
-    param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
-    param_dim = np.prod(param_shape)
-    proposed_syms = t.zeros((NRUN, param_dim))
+# Find symmetries
+param_shape = (state.num_qubits, DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
+param_dim = np.prod(param_shape)
+proposed_syms = t.zeros((NRUN, param_dim))
 
-    for i in range(NRUN):
-        potential_sym, losses[CIRCUIT_DEPTH, i], queries[CIRCUIT_DEPTH, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
-        proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
-        potential_sym = potential_sym.reshape(param_shape)
-    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(losses[CIRCUIT_DEPTH])}, stdev: {np.std(losses[CIRCUIT_DEPTH])}")
-    print(f"[d={CIRCUIT_DEPTH}] Mean # queries: {np.mean(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}")
-    np.save(OUTDIR + f'syms_{STATE_TYPE}_depth_{CIRCUIT_DEPTH}.npy', proposed_syms)
-    
-    np.save(OUTDIR + f'losses_{STATE_TYPE}.npy', losses)
-    np.save(OUTDIR + f'queries_{STATE_TYPE}.npy', queries)
+for i in range(NRUN):
+    potential_sym, losses[i], queries[i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
+    proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
+    potential_sym = potential_sym.reshape(param_shape)
+print(f"[d={DEPTH}] Median loss: {np.median(losses[DEPTH])}, stdev: {np.std(losses[DEPTH])}")
+print(f"[d={DEPTH}] Mean # queries: {np.mean(queries[DEPTH])}, stdev: {np.std(queries[DEPTH])}")
+np.save(OUTDIR + f'syms_{STATE_TYPE}_depth_{DEPTH}.npy', proposed_syms)
 
-# Plot the scaling complexity
-avgs = np.mean(queries, axis=1)
-stdevs = np.std(queries, axis=1)
-x = np.arange(MAX_CIRCUIT_DEPTH+1)
-COLOR = 'darkblue'
+np.save(OUTDIR + f'losses_{DEPTH}_{STATE_TYPE}.npy', losses)
+np.save(OUTDIR + f'queries_{DEPTH}_{STATE_TYPE}.npy', queries)
 
-plt.clf()
-plt.title(fr"$d$-query complexity of {STATE_TYPE}")
-plt.xlabel("Depth")
-plt.plot(x, avgs, c=COLOR)
-plt.fill_between(x, avgs - stdevs, avgs + stdevs, color=COLOR, alpha=0.2)
-plt.savefig(OUTDIR + f"nfev_{STATE_TYPE}.pdf")
+# # Plot the scaling complexity
+# avgs = np.mean(queries, axis=1)
+# stdevs = np.std(queries, axis=1)
+# x = np.arange(DEPTH+1)
+# COLOR = 'darkblue'
+
+# plt.clf()
+# plt.title(fr"$d$-query complexity of {STATE_TYPE}")
+# plt.xlabel("Depth")
+# plt.plot(x, avgs, c=COLOR)
+# plt.fill_between(x, avgs - stdevs, avgs + stdevs, color=COLOR, alpha=0.2)
+# plt.savefig(OUTDIR + f"nfev_{STATE_TYPE}.pdf")

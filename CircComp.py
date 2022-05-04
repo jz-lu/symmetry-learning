@@ -14,7 +14,7 @@ import argparse
 from qiskit.quantum_info import Statevector
 
 parser = argparse.ArgumentParser(description="Compute circuit complexity of a given state")
-parser.add_argument("-d", "--depth", type=int, help='maximum circuit block depth', default=5)
+parser.add_argument("-d", "--depth", type=int, help='circuit block depth', default=5)
 parser.add_argument("-b", "--bases", type=int, help='number of bases', default=2)
 parser.add_argument("-r", "--reg", action='store_true', help='use regularizer')
 parser.add_argument("-o", "--out", type=str, help='output directory', default='.')
@@ -28,7 +28,7 @@ def dprint(msg):
     if args.verbose:
         print(msg)
 
-MAX_DEPTH = args.depth
+DEPTH = args.depth
 NUM_QUBITS = 4
 NUM_BASES = args.bases
 USE_REGULARIZER = args.reg
@@ -63,45 +63,45 @@ elif STATE_TYPE == 'Cluster':
     state = state.evolve(qc)
     
 bases = prepare_basis(state.num_qubits, num=NUM_BASES, init=pi/2 if args.xbasis else 0)
-losses = np.zeros((MAX_DEPTH+1, NRUN))
-queries = np.zeros((MAX_DEPTH+1, NRUN))
+losses = np.zeros(NRUN)
+queries = np.zeros(NRUN)
 
-# Search for symmetries in progressive block depths
-for CIRCUIT_DEPTH in range(1+MAX_DEPTH):
-    hqn = HQNet(state, bases, eta=1e-2, maxiter=1E10*(CIRCUIT_DEPTH+1), disp=False,
-                mode='Nelder-Mead', depth=CIRCUIT_DEPTH, 
-                estimate=ESTIMATE, s_eps=NOISE_SCALE, 
-                metric_func=LOSS_METRIC, ops=None, sample=SAMPLE, 
-                jump=USE_REGULARIZER)
-    dprint(f"[d={CIRCUIT_DEPTH}] Variational circuit:")
-    if args.verbose:
-        print(hqn.view_circuit().draw())
-    
-    param_shape = (state.num_qubits, CIRCUIT_DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
-    param_dim = np.prod(param_shape)
-    # proposed_syms = t.zeros((NRUN, param_dim))
-    
-    for i in range(NRUN):
-        _, losses[CIRCUIT_DEPTH, i], queries[CIRCUIT_DEPTH, i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
-       #  proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
-    
-    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(losses[CIRCUIT_DEPTH])}, stdev: {np.std(losses[CIRCUIT_DEPTH])}", flush=True)
-    print(f"[d={CIRCUIT_DEPTH}] Median loss: {np.median(queries[CIRCUIT_DEPTH])}, stdev: {np.std(queries[CIRCUIT_DEPTH])}", flush=True)
+# Search for symmetries 
+hqn = HQNet(state, bases, eta=1e-2, maxiter=1E10*(DEPTH+1), disp=False,
+            mode='Nelder-Mead', depth=DEPTH, 
+            estimate=ESTIMATE, s_eps=NOISE_SCALE, 
+            metric_func=LOSS_METRIC, ops=None, sample=SAMPLE, 
+            jump=USE_REGULARIZER)
+dprint(f"[d={DEPTH}] Variational circuit:")
+if args.verbose:
+    print(hqn.view_circuit().draw())
 
-    np.save(OUTDIR + f"losses_{CIRCUIT_DEPTH}.npy", losses)
-    np.save(OUTDIR + f"queries_{CIRCUIT_DEPTH}.npy", queries)
+param_shape = (state.num_qubits, DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
+param_dim = np.prod(param_shape)
+# proposed_syms = t.zeros((NRUN, param_dim))
+
+for i in range(NRUN):
+    _, losses[i], queries[i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
+    #  proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
+
+print(f"[d={DEPTH}] Median loss: {np.median(losses[DEPTH])}, stdev: {np.std(losses[DEPTH])}", flush=True)
+print(f"[d={DEPTH}] Median loss: {np.median(queries[DEPTH])}, stdev: {np.std(queries[DEPTH])}", flush=True)
+
+np.save(OUTDIR + f"losses_{DEPTH}.npy", losses)
+np.save(OUTDIR + f"queries_{DEPTH}.npy", queries)
 
 # Plot the data as a bar graph
 bottom_95 = round(NRUN * 0.95) # filter bad runs
 losses = np.sort(losses, axis=0)[:,:bottom_95]
+print("DONE!")
 
-x = np.arange(MAX_DEPTH+1)
-y = np.mean(losses, axis=1)
-err = np.stdev(losses, axis=1)
-plt.clf()
-plt.title("Post-selected mean losses")
-plt.xlabel("Block-depth")
-plt.ylabel("QKL")
-plt.bar(x, y, color='darkblue')
-plt.errorbar(x, y, yerr=err, fmt='o', color='gray')
-plt.savefig(OUTDIR + "circcomp.pdf")
+# x = np.arange(DEPTH+1)
+# y = np.mean(losses, axis=1)
+# err = np.stdev(losses, axis=1)
+# plt.clf()
+# plt.title("Post-selected mean losses")
+# plt.xlabel("Block-depth")
+# plt.ylabel("QKL")
+# plt.bar(x, y, color='darkblue')
+# plt.errorbar(x, y, yerr=err, fmt='o', color='gray')
+# plt.savefig(OUTDIR + "circcomp.pdf")
