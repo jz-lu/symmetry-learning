@@ -79,8 +79,8 @@ for i in range(NRUN):
     potential_sym, losses[i], queries[i] = hqn.find_potential_symmetry(print_log=args.verbose, include_nfev=True)
     proposed_syms[i] = potential_sym if t.is_tensor(potential_sym) else t.from_numpy(potential_sym)
     potential_sym = potential_sym.reshape(param_shape)
-print(f"[d={DEPTH}] Median loss: {np.median(losses[DEPTH])}, stdev: {np.std(losses[DEPTH])}")
-print(f"[d={DEPTH}] Mean # queries: {np.mean(queries[DEPTH])}, stdev: {np.std(queries[DEPTH])}")
+print(f"[d={DEPTH}] Median loss: {np.median(losses)}, stdev: {np.std(losses)}")
+print(f"[d={DEPTH}] Mean # queries: {np.mean(queries)}, stdev: {np.std(queries)}")
 np.save(OUTDIR + f'syms_{STATE_TYPE}_depth_{DEPTH}.npy', proposed_syms)
 
 np.save(OUTDIR + f'losses_{DEPTH}_{STATE_TYPE}.npy', losses)
