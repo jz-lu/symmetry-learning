@@ -48,7 +48,7 @@ class PQC:
     def __init__(self, state, basis_param=None, 
                  metric_func=KL, depth=0, 
                  estimate=False, nrun=50, 
-                 noise=0, markovian=False, state_prep_circ=None, error_prob=0.01, 
+                 noise=0, markovian=False, state_prep_circ=None, qreg=None, error_prob=0.01, 
                  poly=None, say_hi=True, ops=None, sample=False):
         assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
         if noise > 0:
@@ -62,6 +62,7 @@ class PQC:
         self.L = state.num_qubits
         self.depth = depth
         self.poly = poly
+        self.qreg = qreg
         self.state_prep_circ = state_prep_circ
         self.markovian = markovian
         self.error_prob = error_prob
@@ -113,7 +114,7 @@ class PQC:
         The most universal circuit of a given depth is a full entanglement, over every pair.
         We will restrict ourselves to a local version, for the time being at least.
         """
-        qubits = QuantumRegister(self.L)
+        qubits = QuantumRegister(self.L) if self.qreg is None else self.qreg
         Q_th = QuantumCircuit(qubits) if Q_th is None else Q_th
         assert p.shape[0] == self.n_param, f"Expected param shape {self.n_param}, got {p.shape[0]}"
         p = t.reshape(p, (self.L, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH))
@@ -165,22 +166,27 @@ class PQC:
         Apply the quantum circuit with general noise. If `self.markovian` is True,
         only reversible errors will be applied.
         """
-        Q_th = self.__make_Q_th(p, Q_th=Q_th)
+        Q_th = self.__make_Q_th(p, Q_th=self.state_prep_circ)
+        Q_th.measure_all()
+        
         noise_bit_flip = NoiseModel()
         if not self.markovian:
-            noise_bit_flip.add_all_qubit_quantum_error(error_reset, "reset")
-            noise_bit_flip.add_all_qubit_quantum_error(error_meas, "measure")
             error_reset = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
             error_meas = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
+            noise_bit_flip.add_all_qubit_quantum_error(error_reset, "reset")
+            noise_bit_flip.add_all_qubit_quantum_error(error_meas, "measure")
         error_gate1 = pauli_error([('X', self.error_prob), ('I', 1 - self.error_prob)])
         error_gate2 = error_gate1.tensor(error_gate1)
         noise_bit_flip.add_all_qubit_quantum_error(error_gate1, 
                                                     ["u1", "u2", "u3", "rx", "ry", "rz"])
         noise_bit_flip.add_all_qubit_quantum_error(error_gate2, ["cx"])
+        sim_noise = None
         sim_noise = AerSimulator(noise_model=noise_bit_flip)
+        
         circ_tnoise = transpile(Q_th, sim_noise)
         result_bit_flip = sim_noise.run(circ_tnoise).result()
         counts_bit_flip = dict.fromkeys(qubit_expansion(self.L), 0)
+        print(result_bit_flip.get_counts(0))
         counts_bit_flip.update(result_bit_flip.get_counts(0))
         bf_dist = np.array([i[1] for i in sorted(counts_bit_flip.items())]) / sum(counts_bit_flip.values())
         return Statevector(bf_dist)

@@ -49,7 +49,7 @@ class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_NM, regularize=False, disp=False,
                  reg_scale=3, depth=0, estimate=False, poly=None, s_eps=50,
-                 noise=0, state_prep_circ=None, error_prob=0.01, ops=None,
+                 noise=0, state_prep_circ=None, qreg=None, error_prob=0.01, ops=None,
                  sample=False, jump=False, checkpoint=300
                  ):
         """
@@ -64,6 +64,7 @@ class HQNet:
         assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
         if noise > 0:
             assert state_prep_circ is not None, "Must give a state preparation quantum circuit for noisy circuit simulation"
+            assert qreg is not None, "Must give associated quantum register (to state prep circ) for noisy circuit simulation"
         
         maxiter = self.maxiter = int(maxiter)
         self.checkpoint = checkpoint
@@ -88,6 +89,7 @@ class HQNet:
                         nrun=s_eps,
                         noise=noise,
                         state_prep_circ=state_prep_circ,
+                        qreg=qreg, 
                         error_prob=error_prob,
                         poly=poly,
                         say_hi=False, 
