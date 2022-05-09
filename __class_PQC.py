@@ -11,6 +11,7 @@ from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import Statevector
 from qiskit.providers.aer.noise import pauli_error, depolarizing_error
 from qiskit.providers.aer.noise import NoiseModel
+from qiskit.tools.visualization import plot_histogram
 import numpy as np
 import torch as t
 from math import pi
@@ -48,7 +49,7 @@ class PQC:
     def __init__(self, state, basis_param=None, 
                  metric_func=KL, depth=0, 
                  estimate=False, nrun=50, 
-                 noise=0, markovian=False, state_prep_circ=None, qreg=None, error_prob=0.01, 
+                 noise=0, markovian=False, state_prep_circ=None, qreg=None, error_prob=0.001, 
                  poly=None, say_hi=True, ops=None, sample=False):
         assert noise in NOISE_OPS, f"Invalid noise parameter {noise}, must be in {NOISE_OPS}"
         if noise > 0:
@@ -104,7 +105,7 @@ class PQC:
         if say_hi:
             print(f"Parametrized quantum circuit (noise: {noise}{'' if ops is None else ', ops=%d'%ops}) initialized.")
     
-    def __make_Q_th(self, p, Q_th=None):
+    def __make_Q_th(self, p, Q_th=None, noisy=False):
         """
         Make a quantum circuit in qiskit corresponding to parameters p. Currently, 
         the model used is a linear entanglement circuit with depth `self.depth`. This
@@ -114,8 +115,12 @@ class PQC:
         The most universal circuit of a given depth is a full entanglement, over every pair.
         We will restrict ourselves to a local version, for the time being at least.
         """
-        qubits = QuantumRegister(self.L) if self.qreg is None else self.qreg
-        Q_th = QuantumCircuit(qubits) if Q_th is None else Q_th
+        qubits = QuantumRegister(self.L)
+        Q_th = QuantumCircuit(qubits)
+        if noisy: # GHZ only
+            Q_th.h(0)
+            for i in range(1, self.L):
+                Q_th.cx(0, i)
         assert p.shape[0] == self.n_param, f"Expected param shape {self.n_param}, got {p.shape[0]}"
         p = t.reshape(p, (self.L, self.depth+1, PARAM_PER_QUBIT_PER_DEPTH))
         if type(p).__module__ == t.__name__:
@@ -186,7 +191,7 @@ class PQC:
         circ_tnoise = transpile(Q_th, sim_noise)
         result_bit_flip = sim_noise.run(circ_tnoise).result()
         counts_bit_flip = dict.fromkeys(qubit_expansion(self.L), 0)
-        print(result_bit_flip.get_counts(0))
+        # print(result_bit_flip.get_counts(0))
         counts_bit_flip.update(result_bit_flip.get_counts(0))
         bf_dist = np.array([i[1] for i in sorted(counts_bit_flip.items())]) / sum(counts_bit_flip.values())
         return Statevector(bf_dist)

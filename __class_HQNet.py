@@ -49,7 +49,7 @@ class HQNet:
     def __init__(self, state, bases, eta=1e-2, maxiter=1000,
                  metric_func=KL, mode=Q_MODE_NM, regularize=False, disp=False,
                  reg_scale=3, depth=0, estimate=False, poly=None, s_eps=50,
-                 noise=0, state_prep_circ=None, qreg=None, error_prob=0.01, ops=None,
+                 noise=0, state_prep_circ=None, qreg=None, error_prob=0.001, ops=None,
                  sample=False, jump=False, checkpoint=300
                  ):
         """
@@ -251,8 +251,8 @@ class HQNet:
                                                         variable_bounds=bounds)
         
         if print_log:
-            print(f"Optimized to loss metric = {value}")
-            print(f"Queried loss func {nfev} times")
+            print(f"Optimized to loss metric = {value}", flush=True)
+            print(f"Queried loss func {nfev} times", flush=True)
 
         regularizer_losses = None
         if self.regularize or self.jump:
