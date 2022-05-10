@@ -15,6 +15,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Noisy GHZ HQNSL")
 parser.add_argument("-p", '--prob', type=int, help='probability (units of 1e-4)', default=1)
+parser.add_argument('--id', type=int, help='ID number', default=1)
 args = parser.parse_args()
 
 NUM_QUBITS = 3
@@ -47,7 +48,7 @@ noiseless_state = noiseless_state.evolve(qc)
 
 bases = prepare_basis(noiseless_state.num_qubits)
 DEPTH = 0
-MAXITER = 5E4
+MAXITER = 1E4
 num_bases = len(bases)
 hqn = HQNet(noiseless_state, bases, eta=1e-2, maxiter=MAXITER, disp=False,
             mode='Nelder-Mead', depth=DEPTH, 
@@ -57,7 +58,7 @@ hqn = HQNet(noiseless_state, bases, eta=1e-2, maxiter=MAXITER, disp=False,
 
 # Find the symmetries of the noiseless and noisy states.
 param_shape = (noiseless_state.num_qubits, DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
-NRUN = 30
+NRUN = 5
 param_dim = np.prod(param_shape)
 proposed_syms = t.zeros((NRUN, param_dim)) # first dim is for the 3 types of noise
 losses = np.zeros(NRUN)
@@ -70,14 +71,14 @@ for j in range(NRUN):
     total_loss += loss
     losses[j] = loss
 print(f"Average loss: {total_loss / NRUN}")
-np.save("./losses_noisy.npy", losses)
+np.save(f"./losses_noisy_{args.id}.npy", losses)
 
 losses = np.zeros(NRUN)
 for j, sym in enumerate(proposed_syms):
     losses[j] = np.mean([PQC(noiseless_state, depth=DEPTH, basis_param=basis_here, metric_func=KL, say_hi=False)\
             .evaluate_true_metric(sym)for basis_here in bases])
-np.save("./losses_cv.npy", losses)
-np.save("./syms.npy", proposed_syms)
+np.save(f"./losses_cv_{args.id}.npy", losses)
+np.save(f"./syms_{args.id}.npy", proposed_syms)
 print(f"{np.mean(losses)} with deviation {np.std(losses)}")
 
 
