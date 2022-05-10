@@ -11,11 +11,16 @@ from qiskit import transpile, QuantumRegister
 from qiskit.providers.aer.noise import pauli_error, depolarizing_error
 from qiskit.tools.visualization import plot_histogram
 from qiskit.providers.aer.noise import NoiseModel
+import argparse
+
+parser = argparse.ArgumentParser(description="Noisy GHZ HQNSL")
+parser.add_argument("-p", '--prob', type=int, help='probability (units of 1e-4)', default=1)
+args = parser.parse_args()
 
 NUM_QUBITS = 3
 qreg = QuantumRegister(NUM_QUBITS)
 STATE_TYPE = 'GHZ'
-PROBABILITY = 0.001
+PROBABILITY = 0.001 * args.prob
 
 PROB_DEPOL = PROBABILITY
 PROB_RESET = PROBABILITY

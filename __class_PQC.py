@@ -171,7 +171,7 @@ class PQC:
         Apply the quantum circuit with general noise. If `self.markovian` is True,
         only reversible errors will be applied.
         """
-        Q_th = self.__make_Q_th(p, Q_th=self.state_prep_circ)
+        Q_th = self.__make_Q_th(p, Q_th=None, noisy=True)
         Q_th.measure_all()
         
         noise_bit_flip = NoiseModel()
