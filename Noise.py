@@ -14,14 +14,13 @@ from qiskit.providers.aer.noise import NoiseModel
 import argparse
 
 parser = argparse.ArgumentParser(description="Noisy GHZ HQNSL")
-parser.add_argument("-p", '--prob', type=int, help='probability (units of 1e-4)', default=1)
 parser.add_argument('--id', type=int, help='ID number', default=1)
 args = parser.parse_args()
 
 NUM_QUBITS = 3
 qreg = QuantumRegister(NUM_QUBITS)
 STATE_TYPE = 'GHZ'
-PROBABILITY = 0.001 * args.prob
+PROBABILITY = np.linspace(1e-5, 5e-2, 101)[args.id]
 
 PROB_DEPOL = PROBABILITY
 PROB_RESET = PROBABILITY
