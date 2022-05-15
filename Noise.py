@@ -16,11 +16,13 @@ import argparse
 parser = argparse.ArgumentParser(description="Noisy GHZ HQNSL")
 parser.add_argument('--id', type=int, help='ID number', default=1)
 args = parser.parse_args()
+id1, id2 = str(args.id).zfill(2)
+id1, id2 = int(id1), int(id2)
 
 NUM_QUBITS = 3
 qreg = QuantumRegister(NUM_QUBITS)
 STATE_TYPE = 'GHZ'
-PROBABILITY = np.linspace(1e-5, 5e-2, 101)[args.id]
+PROBABILITY = np.linspace(1, 10, 10)[id2] * 10**(id1-5)
 
 PROB_DEPOL = PROBABILITY
 PROB_RESET = PROBABILITY
@@ -57,7 +59,7 @@ hqn = HQNet(noiseless_state, bases, eta=1e-2, maxiter=MAXITER, disp=False,
 
 # Find the symmetries of the noiseless and noisy states.
 param_shape = (noiseless_state.num_qubits, DEPTH+1, PARAM_PER_QUBIT_PER_DEPTH)
-NRUN = 5
+NRUN = 20
 param_dim = np.prod(param_shape)
 proposed_syms = t.zeros((NRUN, param_dim)) # first dim is for the 3 types of noise
 losses = np.zeros(NRUN)
