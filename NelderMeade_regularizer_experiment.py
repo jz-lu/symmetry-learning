@@ -10,7 +10,6 @@ from qiskit.quantum_info import Statevector
 #%matplotlib inline
 
 # Useful additional packages 
-import matplotlib.pyplot as plt
 import numpy as np
 from math import pi
 
