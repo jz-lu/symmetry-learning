@@ -4,7 +4,6 @@ from __loss_funcs import KL
 from __class_BasisTransformer import BasisTransformer
 from __class_PQC import PQC
 from __class_HQNet import HQNet
-import matplotlib.pyplot as plt
 import numpy as np
 from math import pi
 from qiskit.quantum_info import Statevector
