@@ -414,7 +414,7 @@ def matrix(p):
 
   
 
-data = torch.ones(50, 50, 100, 3, 3)
+data = torch.ones(50, 100, 3, 3)
 
 
 
@@ -422,14 +422,12 @@ data = torch.ones(50, 50, 100, 3, 3)
 
 
 for i in range(50):
-    for j in range(50):
-        lr = (i+1) * (1/50)
-        gs = (j+1) * (0.1/50)
-        finder = SymFinder(5000, lr2 = lr, gradient_step2 = gs)
-        finder.train()
-        for k in range(len(finder.known_symmetries)):
-            data[i,j,k % 100,: ,: ] = finder.known_symmetries[k]
-        print(i,j)
+    lr = (i+1) * (1/50)
+    finder = SymFinder(5000, lr2 = lr, gradient_step2 = 0.02)
+    finder.train()
+    for k in range(len(finder.known_symmetries)):
+        data[i,k % 100,: ,: ] = finder.known_symmetries[k]
+        print(i, flush = True)
         torch.save(data, 'NM_regularizer_data.pt')
 
 torch.save(data, 'NM_regularizer_data.pt')

@@ -42,6 +42,8 @@ class PQC:
             self.bp = basis_param.clone().cpu().detach().numpy()
         elif type(basis_param).__module__ == np.__name__:
             self.bp = basis_param
+        else:
+            print(type(basis_param).__module__)
         self.bp = -self.bp # *= -1 since measurement ~= inverted rotation
         
         # Obtain distribution of state when measured in the given basis.
@@ -87,6 +89,12 @@ class PQC:
             
         return Q_th
         
+    def get_Q_th(self, p):
+        """
+        Get quantum circuit associated with parameter `p`.
+        """
+        return self.__make_Q_th(p)
+    
     def __Q_th(self, p):
         """
         Apply the quantum circuit in qiskit corresponding to Q_theta with parameters p.
