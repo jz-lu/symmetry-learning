@@ -422,15 +422,15 @@ data = torch.ones(50, 100, 3, 3)
 
 
 for i in range(50):
-    lr = (i+1) * (1/50)
-    finder = SymFinder(5000, lr2 = lr, gradient_step2 = 0.02)
+    lr = (i+1) * (5/50)
+    finder = SymFinder(5000, lr2 = lr, gradient_step2 = 0.01)
     finder.train()
     for k in range(len(finder.known_symmetries)):
         data[i,k % 100,: ,: ] = finder.known_symmetries[k]
         print(i, flush = True)
-        torch.save(data, 'NM_regularizer_data.pt')
+        torch.save(data, 'NM_regularizer_data3.pt')
 
-torch.save(data, 'NM_regularizer_data.pt')
+torch.save(data, 'NM_regularizer_data3.pt')
   
 
   
