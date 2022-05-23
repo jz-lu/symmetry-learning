@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 
 #data = torch.load('regularizer_data.pt')
 
-data = torch.load('NM_data1.pt')
-print(data.size())
+data1 = torch.load('NM_regularizer_data1.pt')
+data0 = torch.load('NM_regularizer_data0.pt')
+data2 = torch.load('NM_regularizer_data2.pt')
+data3 = torch.load('NM_regularizer_data3.pt')
 
 
 def matrix(p):
@@ -19,8 +21,6 @@ def matrix(p):
     return [u0, u1, u2]
 
 
-for i in range(100):
-    print(matrix(data[40,i,:,:]))
 
 def diag_or_not(p):
     diag = torch.abs(matrix(p)[0][0,0]).item()
@@ -42,9 +42,9 @@ def switching_score(symmetries):
 xs = []
 ys = []
 for i in range(50):
-    xs.append((i+1) * (1/50))
-    ys.append(switching_score(data[i,:,:,:]))
+    xs.append((i+1) * (5/50))
+    ys.append((switching_score(data0[i,:,:,:])+switching_score(data1[i,:,:,:])+switching_score(data2[i,:,:,:])+switching_score(data3[i,:,:,:]))/4)
 
-
+np.save('experiment_data1.npy', [xs,ys])e
 plt.plot(xs, ys)
 plt.show()
