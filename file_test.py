@@ -1,5 +1,9 @@
 import torch
+import numpy as np
 #data = torch.load('regularizer_data.pt')
+
+data = np.load('experiment_data1.npy')
+print(np.shape(data))
 
 data = torch.load('NM_data1.pt')
 print(data.size())

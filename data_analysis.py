@@ -45,6 +45,6 @@ for i in range(50):
     xs.append((i+1) * (5/50))
     ys.append((switching_score(data0[i,:,:,:])+switching_score(data1[i,:,:,:])+switching_score(data2[i,:,:,:])+switching_score(data3[i,:,:,:]))/4)
 
-np.save('experiment_data1.npy', [xs,ys])
+np.save('experiment_data1.npy', [xs,ys])e
 plt.plot(xs, ys)
 plt.show()
