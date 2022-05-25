@@ -149,6 +149,12 @@ class PQC:
         """
         Q_th = self.__make_Q_th(p)
         return self.state.copy().evolve(Q_th)
+    
+    def get_Q_th(self, p):
+        """
+        Get quantum circuit associated with parameter `p`.
+        """
+        return self.__make_Q_th(p)
 
     def __Q_th_noise_1(self, p):
         """
