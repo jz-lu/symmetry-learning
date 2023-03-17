@@ -83,4 +83,3 @@ np.save(f"./syms_{args.id}.npy", proposed_syms)
 print(f"{np.mean(losses)} with deviation {np.std(losses)}")
 
 
-

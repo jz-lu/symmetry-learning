@@ -1,6 +1,9 @@
 #* Uncomment these two lines if running directly on local MacOS. It has some weird OS problem that this line magically fixes.
+"""
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
+"""
+
 from math import pi
 from __class_PQC import PQC
 from __class_HQNet import HQNet
@@ -148,7 +151,7 @@ class PQC:
                 poly=poly, nrun=nrun
                 )[0]
         else:
-                self.basis_dist = state.probabilities()
+            self.basis_dist = state.probabilities()
         
         # Choose the appropriate quantum circuit based on noise level
         self.evolver = self.__Q_th
