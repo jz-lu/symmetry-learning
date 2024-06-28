@@ -3,6 +3,7 @@
 import torch as t
 import numpy as np
 from torch.linalg import eig
+import numpy.linalg as LA
 
 '''Device where we are running'''
 #defining the device
@@ -44,7 +45,7 @@ class XY:
         self.get_H()
     
     '''Do not call outside constructor'''
-    def get_H(self): 
+    def get_H(self):
         self.H = t.zeros((2**self.L, 2**self.L), dtype=t.cfloat).to(device)
         for i in range(self.L): 
             self.H += add_op([Sz],[self.h], [i], self.L)
@@ -66,5 +67,6 @@ class XY:
 def xy_ground_state(L, J=1, n=1, h=5e-1):
     """Generate XY gs on L qubits. See Hamiltonians.ipynb for parameter docs"""
     gse, gs = XY(J, n, h, L).get_ground_state()
-    print(f"Ground state energy of XY({L}): {gse.item()}")
+    # print(f"Ground state energy of XY({L}): {gse.item()}")
+    print("Ground state norm:", LA.norm(gs))
     return gs

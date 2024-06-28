@@ -1,0 +1,5 @@
+Starting calculations...
+Querying on L = 12
+[L=12] Median loss: 2.1577838182906817e-08, stdev: 0.6549339222177976
+[L=12] Mean # queries: 566687.3, stdev: 697203.4128298642
+Calculations complete!

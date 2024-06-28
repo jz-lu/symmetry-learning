@@ -1,0 +1,53 @@
+Starting calculations...
+      ┌───┐               
+q0_0: ┤ H ├──■────■────■──
+      └───┘┌─┴─┐  │    │  
+q0_1: ─────┤ X ├──┼────┼──
+           └───┘┌─┴─┐  │  
+q0_2: ──────────┤ X ├──┼──
+                └───┘┌─┴─┐
+q0_3: ───────────────┤ X ├
+                     └───┘
+Querying on d = 2
+[d=2] Variational circuit:
+      ┌───────┐┌───────┐     ┌───────┐┌───────┐                  ┌───────┐»
+q3_0: ┤ Ry(0) ├┤ Rz(0) ├──■──┤ Ry(0) ├┤ Rz(0) ├─────────────■────┤ Ry(0) ├»
+      ├───────┤├───────┤┌─┴─┐└───────┘├───────┤┌───────┐  ┌─┴─┐  └───────┘»
+q3_1: ┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────»
+      ├───────┤├───────┤└───┘  ┌─┴─┐  └───────┘├───────┤┌─┴───┴─┐  ┌─┴─┐  »
+q3_2: ┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──»
+      ├───────┤├───────┤       └───┘    ┌─┴─┐  ├───────┤├───────┤  └───┘  »
+q3_3: ┤ Ry(0) ├┤ Rz(0) ├────────────────┤ X ├──┤ Ry(0) ├┤ Rz(0) ├─────────»
+      └───────┘└───────┘                └───┘  └───────┘└───────┘         »
+«      ┌───────┐┌──────────┐                        
+«q3_0: ┤ Rz(0) ├┤ U(0,0,0) ├────────────────────────
+«      ├───────┤└┬───────┬─┘┌──────────┐            
+«q3_1: ┤ Ry(0) ├─┤ Rz(0) ├──┤ U(0,0,0) ├────────────
+«      └───────┘ ├───────┤  └┬───────┬─┘┌──────────┐
+«q3_2: ────■─────┤ Ry(0) ├───┤ Rz(0) ├──┤ U(0,0,0) ├
+«        ┌─┴─┐   ├───────┤   ├───────┤  ├──────────┤
+«q3_3: ──┤ X ├───┤ Ry(0) ├───┤ Rz(0) ├──┤ U(0,0,0) ├
+«        └───┘   └───────┘   └───────┘  └──────────┘
+Optimized to loss metric = 4.864131084134256e-14
+Queried loss func 15075 times
+Optimized to loss metric = 1.4912777366064486e-15
+Queried loss func 12465 times
+Optimized to loss metric = 0.06311094760894775
+Queried loss func 19107 times
+Optimized to loss metric = 3.645631499048403e-15
+Queried loss func 14049 times
+Optimized to loss metric = 4.3090167935536106e-13
+Queried loss func 17881 times
+Optimized to loss metric = 1.4388745186652563e-14
+Queried loss func 12230 times
+Optimized to loss metric = 7.217268915837849e-08
+Queried loss func 5318 times
+Optimized to loss metric = 6.582593899216033e-14
+Queried loss func 12692 times
+Optimized to loss metric = 2.123200907081478e-14
+Queried loss func 18871 times
+Optimized to loss metric = 1.6516276803786763e-14
+Queried loss func 28846 times
+[d=2] Median loss: 0.06311094760894775, stdev: 0.0
+[d=2] Mean # queries: 19107.0, stdev: 0.0
+Calculations complete!

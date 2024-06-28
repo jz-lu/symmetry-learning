@@ -1,5 +1,5 @@
 # Parameterizations
-PARAM_PER_QUBIT_PER_DEPTH = 2
+PARAM_PER_QUBIT_PER_DEPTH = 3
 
 # * HQNet constants
 SAMPLING_DENSITY = 200
@@ -37,3 +37,5 @@ DEFAULT_QNET_OPS = {
     'max_iter': 5e3     # FGSGD: maximum iterations per epoch
 }
 MINIMUM_LR = 1e-5
+
+NOISE_OPS = [0,1,2]

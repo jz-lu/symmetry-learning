@@ -1,6 +1,7 @@
 from qiskit import QuantumCircuit, QuantumRegister
 import numpy as np
 import torch as t
+from __helpers import qubit_retraction
 
 """
 === Overview ===
@@ -54,5 +55,17 @@ class BasisTransformer:
     def transformed_states(self):
         return self.transformed_states
     
-    def updated_dist(self):
-        return [state.probabilities() for state in self.transformed_states]
+    def updated_dist(self, estimate=False, poly=None, nrun=100, sample=False):
+        units = 2**self.L if poly is None else self.L**poly
+        def est(state):
+            estim = np.zeros(2**self.L)
+            for _ in range(nrun * units):
+                estim[qubit_retraction(state.measure()[0])] += 1
+            return estim / (nrun * units)
+        
+        if estimate and sample:
+            return [[qubit_retraction(state.measure()[0]) for _ in range(units)] for state in self.transformed_states]
+        elif estimate:
+            return [est(state) for state in self.transformed_states]  
+        else:
+            return [state.probabilities() for state in self.transformed_states]

@@ -1,0 +1,46 @@
+Starting calculations...
+Running on the CPU
+Ground state norm: 1.0
+Querying on d = 2
+[d=2] Variational circuit:
+      ┌───────┐┌───────┐     ┌───────┐┌───────┐                  ┌───────┐»
+q2_0: ┤ Ry(0) ├┤ Rz(0) ├──■──┤ Ry(0) ├┤ Rz(0) ├─────────────■────┤ Ry(0) ├»
+      ├───────┤├───────┤┌─┴─┐└───────┘├───────┤┌───────┐  ┌─┴─┐  └───────┘»
+q2_1: ┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────»
+      ├───────┤├───────┤└───┘  ┌─┴─┐  └───────┘├───────┤┌─┴───┴─┐  ┌─┴─┐  »
+q2_2: ┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──»
+      ├───────┤├───────┤       └───┘    ┌─┴─┐  ├───────┤├───────┤  └───┘  »
+q2_3: ┤ Ry(0) ├┤ Rz(0) ├────────────────┤ X ├──┤ Ry(0) ├┤ Rz(0) ├─────────»
+      └───────┘└───────┘                └───┘  └───────┘└───────┘         »
+«      ┌───────┐┌─────────────┐                              
+«q2_0: ┤ Rz(0) ├┤ U(-π/2,0,0) ├──────────────────────────────
+«      ├───────┤└──┬───────┬──┘┌─────────────┐               
+«q2_1: ┤ Ry(0) ├───┤ Rz(0) ├───┤ U(-π/2,0,0) ├───────────────
+«      └───────┘   ├───────┤   └──┬───────┬──┘┌─────────────┐
+«q2_2: ────■───────┤ Ry(0) ├──────┤ Rz(0) ├───┤ U(-π/2,0,0) ├
+«        ┌─┴─┐     ├───────┤      ├───────┤   ├─────────────┤
+«q2_3: ──┤ X ├─────┤ Ry(0) ├──────┤ Rz(0) ├───┤ U(-π/2,0,0) ├
+«        └───┘     └───────┘      └───────┘   └─────────────┘
+Optimized to loss metric = 0.0001261677680304274
+Queried loss func 67615 times
+Optimized to loss metric = 0.00023369703558273613
+Queried loss func 146479 times
+Optimized to loss metric = 1.9471757696010172e-05
+Queried loss func 103019 times
+Optimized to loss metric = 0.0002700520271901041
+Queried loss func 116336 times
+Optimized to loss metric = 0.000122150027891621
+Queried loss func 89337 times
+Optimized to loss metric = 0.00039125140756368637
+Queried loss func 56618 times
+Optimized to loss metric = 3.1230898457579315e-05
+Queried loss func 161932 times
+Optimized to loss metric = 0.00029380846535786986
+Queried loss func 60282 times
+Optimized to loss metric = 3.4329794289078563e-05
+Queried loss func 92176 times
+Optimized to loss metric = 3.764926077565178e-05
+Queried loss func 122288 times
+[d=2] Median loss: 1.9471757696010172e-05, stdev: 0.0
+[d=2] Mean # queries: 103019.0, stdev: 0.0
+Calculations complete!

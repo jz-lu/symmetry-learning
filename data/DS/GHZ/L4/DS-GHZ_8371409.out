@@ -1,0 +1,53 @@
+Starting calculations...
+      ┌───┐               
+q0_0: ┤ H ├──■────■────■──
+      └───┘┌─┴─┐  │    │  
+q0_1: ─────┤ X ├──┼────┼──
+           └───┘┌─┴─┐  │  
+q0_2: ──────────┤ X ├──┼──
+                └───┘┌─┴─┐
+q0_3: ───────────────┤ X ├
+                     └───┘
+Querying on d = 1
+[d=1] Variational circuit:
+      ┌───────┐┌───────┐     ┌───────┐┌───────┐┌──────────┐            »
+q3_0: ┤ Ry(0) ├┤ Rz(0) ├──■──┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├────────────»
+      ├───────┤├───────┤┌─┴─┐└───────┘├───────┤└┬───────┬─┘┌──────────┐»
+q3_1: ┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├─┤ Rz(0) ├──┤ U(0,0,0) ├»
+      ├───────┤├───────┤└───┘  ┌─┴─┐  └───────┘ ├───────┤  └┬───────┬─┘»
+q3_2: ┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──────■─────┤ Ry(0) ├───┤ Rz(0) ├──»
+      ├───────┤├───────┤       └───┘    ┌─┴─┐   ├───────┤   ├───────┤  »
+q3_3: ┤ Ry(0) ├┤ Rz(0) ├────────────────┤ X ├───┤ Ry(0) ├───┤ Rz(0) ├──»
+      └───────┘└───────┘                └───┘   └───────┘   └───────┘  »
+«                  
+«q3_0: ────────────
+«                  
+«q3_1: ────────────
+«      ┌──────────┐
+«q3_2: ┤ U(0,0,0) ├
+«      ├──────────┤
+«q3_3: ┤ U(0,0,0) ├
+«      └──────────┘
+Optimized to loss metric = 7.023960999283504e-15
+Queried loss func 7511 times
+Optimized to loss metric = 1.2125523090362549
+Queried loss func 6446 times
+Optimized to loss metric = 2.0557506570520814e-15
+Queried loss func 6285 times
+Optimized to loss metric = 1.1118190888076678e-14
+Queried loss func 7385 times
+Optimized to loss metric = 1.22198486328125
+Queried loss func 10883 times
+Optimized to loss metric = -1.2400371765389825e-16
+Queried loss func 10090 times
+Optimized to loss metric = 0.9959503412246704
+Queried loss func 12957 times
+Optimized to loss metric = 9.233099582204446e-15
+Queried loss func 5860 times
+Optimized to loss metric = 7.901350336817978e-15
+Queried loss func 8012 times
+Optimized to loss metric = 0.9959536790847778
+Queried loss func 10654 times
+[d=1] Median loss: 1.2125523090362549, stdev: 0.0
+[d=1] Mean # queries: 6446.0, stdev: 0.0
+Calculations complete!

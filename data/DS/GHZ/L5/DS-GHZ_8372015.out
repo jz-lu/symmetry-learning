@@ -1,0 +1,48 @@
+Starting calculations...
+      ┌───┐                    
+q0_0: ┤ H ├──■────■────■────■──
+      └───┘┌─┴─┐  │    │    │  
+q0_1: ─────┤ X ├──┼────┼────┼──
+           └───┘┌─┴─┐  │    │  
+q0_2: ──────────┤ X ├──┼────┼──
+                └───┘┌─┴─┐  │  
+q0_3: ───────────────┤ X ├──┼──
+                     └───┘┌─┴─┐
+q0_4: ────────────────────┤ X ├
+                          └───┘
+Querying on d = 0
+[d=0] Variational circuit:
+      ┌───────┐┌───────┐┌──────────┐
+q3_0: ┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├
+      ├───────┤├───────┤├──────────┤
+q3_1: ┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├
+      ├───────┤├───────┤├──────────┤
+q3_2: ┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├
+      ├───────┤├───────┤├──────────┤
+q3_3: ┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├
+      ├───────┤├───────┤├──────────┤
+q3_4: ┤ Ry(0) ├┤ Rz(0) ├┤ U(0,0,0) ├
+      └───────┘└───────┘└──────────┘
+Optimized to loss metric = -1.7779945776037667e-15
+Queried loss func 3003 times
+Optimized to loss metric = -1.4874434302124652e-15
+Queried loss func 3049 times
+Optimized to loss metric = 7.110250363202668e-15
+Queried loss func 2415 times
+Optimized to loss metric = -5.908171274128992e-16
+Queried loss func 3307 times
+Optimized to loss metric = -7.734886233946761e-16
+Queried loss func 2712 times
+Optimized to loss metric = -1.4137165178131485e-15
+Queried loss func 2941 times
+Optimized to loss metric = 5.170494515529958e-16
+Queried loss func 2820 times
+Optimized to loss metric = -1.5507896362058253e-15
+Queried loss func 2894 times
+Optimized to loss metric = -1.0965672653286411e-16
+Queried loss func 2598 times
+Optimized to loss metric = -7.071279330211563e-16
+Queried loss func 2754 times
+[d=0] Median loss: -1.7779945776037667e-15, stdev: 0.0
+[d=0] Mean # queries: 3003.0, stdev: 0.0
+Calculations complete!

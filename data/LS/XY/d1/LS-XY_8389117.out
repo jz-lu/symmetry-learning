@@ -1,0 +1,7 @@
+Starting calculations...
+Querying on L = 13
+Running on the CPU
+Ground state norm: 1.0000013
+[L=13] Median loss: 0.017790457233786583, stdev: 0.029279899949633013
+[L=13] Mean # queries: 261701.6, stdev: 132167.98598011548
+Calculations complete!

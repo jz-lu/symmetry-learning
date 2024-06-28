@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH -J NOISE-GHZ5
+#SBATCH -n 48
+#SBATCH -t 1-00:00:00
+#SBATCH -p shared
+#SBATCH --mem-per-cpu=8000
+#SBATCH -o NOISE-GHZ_%a.out
+#SBATCH -e er_NOISE-GHZ_%a.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=jlu@college.harvard.edu
+source activate $HOME/anaconda_env
+APP_DIR="/n/home04/jzlu/symmetry-learning/"
+module list
+echo "Starting calculations..."
+python3 $APP_DIR/Noise.py --id ${SLURM_ARRAY_TASK_ID}
+echo "Calculations complete!"
