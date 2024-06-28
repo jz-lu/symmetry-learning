@@ -1,3 +1,7 @@
+"""
+Convert a PQC circuit to a qiskit operator.
+"""
+
 import numpy as np
 from __class_PQC import PQC
 import qiskit.quantum_info as qi

@@ -1,0 +1,141 @@
+Starting calculations...
+     ┌───┐         
+q_0: ┤ H ├─■──■────
+     ├───┤ │  │    
+q_1: ┤ H ├─■──┼──■─
+     ├───┤    │  │ 
+q_2: ┤ H ├─■──■──┼─
+     ├───┤ │     │ 
+q_3: ┤ H ├─■─────■─
+     └───┘         
+[d=4] Variational circuit:
+      ┌───────┐┌───────┐     ┌───────┐┌───────┐                  ┌───────┐»
+q2_0: ┤ Ry(0) ├┤ Rz(0) ├──■──┤ Ry(0) ├┤ Rz(0) ├─────────────■────┤ Ry(0) ├»
+      ├───────┤├───────┤┌─┴─┐└───────┘├───────┤┌───────┐  ┌─┴─┐  └───────┘»
+q2_1: ┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────»
+      ├───────┤├───────┤└───┘  ┌─┴─┐  └───────┘├───────┤┌─┴───┴─┐  ┌─┴─┐  »
+q2_2: ┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──»
+      ├───────┤├───────┤       └───┘    ┌─┴─┐  ├───────┤├───────┤  └───┘  »
+q2_3: ┤ Ry(0) ├┤ Rz(0) ├────────────────┤ X ├──┤ Ry(0) ├┤ Rz(0) ├─────────»
+      └───────┘└───────┘                └───┘  └───────┘└───────┘         »
+«      ┌───────┐                  ┌───────┐┌───────┐                  ┌───────┐»
+«q2_0: ┤ Rz(0) ├─────────────■────┤ Ry(0) ├┤ Rz(0) ├─────────────■────┤ Ry(0) ├»
+«      ├───────┤┌───────┐  ┌─┴─┐  └───────┘├───────┤┌───────┐  ┌─┴─┐  └───────┘»
+«q2_1: ┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────»
+«      └───────┘├───────┤┌─┴───┴─┐  ┌─┴─┐  └───────┘├───────┤┌─┴───┴─┐  ┌─┴─┐  »
+«q2_2: ────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──────■────┤ Ry(0) ├┤ Rz(0) ├──┤ X ├──»
+«        ┌─┴─┐  ├───────┤├───────┤  └───┘    ┌─┴─┐  ├───────┤├───────┤  └───┘  »
+«q2_3: ──┤ X ├──┤ Ry(0) ├┤ Rz(0) ├───────────┤ X ├──┤ Ry(0) ├┤ Rz(0) ├─────────»
+«        └───┘  └───────┘└───────┘           └───┘  └───────┘└───────┘         »
+«      ┌───────┐┌──────────┐                        
+«q2_0: ┤ Rz(0) ├┤ U(0,0,0) ├────────────────────────
+«      ├───────┤└┬───────┬─┘┌──────────┐            
+«q2_1: ┤ Ry(0) ├─┤ Rz(0) ├──┤ U(0,0,0) ├────────────
+«      └───────┘ ├───────┤  └┬───────┬─┘┌──────────┐
+«q2_2: ────■─────┤ Ry(0) ├───┤ Rz(0) ├──┤ U(0,0,0) ├
+«        ┌─┴─┐   ├───────┤   ├───────┤  ├──────────┤
+«q2_3: ──┤ X ├───┤ Ry(0) ├───┤ Rz(0) ├──┤ U(0,0,0) ├
+«        └───┘   └───────┘   └───────┘  └──────────┘
+Optimized to loss metric = 1.2388812848859732e-12
+Queried loss func 288528 times
+Optimized to loss metric = 6.277456419262473e-12
+Queried loss func 360278 times
+Optimized to loss metric = 2.490427352189184e-12
+Queried loss func 364772 times
+Optimized to loss metric = 0.004698164761066437
+Queried loss func 57668 times
+Optimized to loss metric = 1.7161765064610535e-11
+Queried loss func 384166 times
+Optimized to loss metric = 2.3450203584518547e-11
+Queried loss func 290708 times
+Optimized to loss metric = 6.3765711461050145e-12
+Queried loss func 537768 times
+Optimized to loss metric = 0.005304965190589428
+Queried loss func 91400 times
+Optimized to loss metric = 0.0046981642954051495
+Queried loss func 83525 times
+Optimized to loss metric = 1.9741843576559504e-11
+Queried loss func 674911 times
+Optimized to loss metric = 2.0039267120686155e-11
+Queried loss func 1247534 times
+Optimized to loss metric = 0.003175279125571251
+Queried loss func 97532 times
+Optimized to loss metric = 0.004485832527279854
+Queried loss func 88656 times
+Optimized to loss metric = 1.0315075182898426e-11
+Queried loss func 578976 times
+Optimized to loss metric = 1.0991802086579572e-11
+Queried loss func 720446 times
+Optimized to loss metric = 1.9020904643007874e-12
+Queried loss func 1100526 times
+Optimized to loss metric = 0.0031752781942486763
+Queried loss func 80454 times
+Optimized to loss metric = 9.646275748662059e-13
+Queried loss func 357997 times
+Optimized to loss metric = 0.005304959136992693
+Queried loss func 107560 times
+Optimized to loss metric = 5.2074990153361256e-11
+Queried loss func 928380 times
+Optimized to loss metric = 2.3935908810557294e-11
+Queried loss func 451087 times
+Optimized to loss metric = 0.0031752795912325382
+Queried loss func 77261 times
+Optimized to loss metric = 1.010949483848389e-11
+Queried loss func 1193248 times
+Optimized to loss metric = 6.223652149195402e-11
+Queried loss func 1352440 times
+Optimized to loss metric = 7.971116822158564e-12
+Queried loss func 503261 times
+Optimized to loss metric = 7.509543334394131e-12
+Queried loss func 264588 times
+Optimized to loss metric = 0.007094023283571005
+Queried loss func 106929 times
+Optimized to loss metric = 1.1572976951756964e-11
+Queried loss func 704368 times
+Optimized to loss metric = 0.0028642951510846615
+Queried loss func 66721 times
+Optimized to loss metric = 3.2317010666919194e-14
+Queried loss func 224058 times
+Optimized to loss metric = 6.114181209937453e-12
+Queried loss func 575775 times
+Optimized to loss metric = 0.0012437127297744155
+Queried loss func 136116 times
+Optimized to loss metric = 2.799362824879026e-11
+Queried loss func 640793 times
+Optimized to loss metric = 0.004698197823017836
+Queried loss func 77956 times
+Optimized to loss metric = 9.211990545376914e-12
+Queried loss func 524164 times
+Optimized to loss metric = 8.055571834586495e-12
+Queried loss func 628114 times
+Optimized to loss metric = 0.0042809294536709785
+Queried loss func 50041 times
+Optimized to loss metric = 7.598768836380998e-11
+Queried loss func 858480 times
+Optimized to loss metric = 1.1452219177859359e-14
+Queried loss func 239038 times
+Optimized to loss metric = 6.031958266206061e-11
+Queried loss func 830221 times
+Optimized to loss metric = 6.107127824284131e-12
+Queried loss func 543026 times
+Optimized to loss metric = 0.004485823214054108
+Queried loss func 68464 times
+Optimized to loss metric = 1.6446177752982294e-11
+Queried loss func 661023 times
+Optimized to loss metric = 6.8103881908920805e-12
+Queried loss func 456762 times
+Optimized to loss metric = 0.005304960533976555
+Queried loss func 96371 times
+Optimized to loss metric = 1.3882567838352511e-11
+Queried loss func 547920 times
+Optimized to loss metric = 0.0009940806776285172
+Queried loss func 90026 times
+Optimized to loss metric = -1.6659237542316686e-15
+Queried loss func 155646 times
+Optimized to loss metric = 7.797187374924963e-13
+Queried loss func 351176 times
+Optimized to loss metric = 0.004485820420086384
+Queried loss func 68390 times
+[d=4] Median loss: 1.989055534862283e-11, stdev: 0.0021172210660747363
+[d=4] Median loss: 359137.5, stdev: 342518.37277880206
+Calculations complete!

@@ -1,3 +1,8 @@
+"""
+Simulate the effect of noise on the learning algorithm,
+fixing the GHZ state as the input for convenience.
+"""
+
 from __loss_funcs import KL
 from __helpers import prepare_basis, qubit_expansion
 from ___constants import PARAM_PER_QUBIT_PER_DEPTH

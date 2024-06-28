@@ -1,5 +1,5 @@
 """
-Display mean and variance of circuit complexity of the 4-qubit cluster
+Calculate the "circuit" complexity of the 4-qubit cluster
 state, 4-qubit GHZ state, and 4-qubit XY Hamiltonian GS.
 """
 from __helpers import prepare_basis, param_to_unitary

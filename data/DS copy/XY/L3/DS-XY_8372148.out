@@ -1,0 +1,35 @@
+Starting calculations...
+Running on the CPU
+Ground state norm: 0.99999994
+Querying on d = 0
+[d=0] Variational circuit:
+      ┌───────┐┌───────┐┌─────────────┐
+q2_0: ┤ Ry(0) ├┤ Rz(0) ├┤ U(-π/2,0,0) ├
+      ├───────┤├───────┤├─────────────┤
+q2_1: ┤ Ry(0) ├┤ Rz(0) ├┤ U(-π/2,0,0) ├
+      ├───────┤├───────┤├─────────────┤
+q2_2: ┤ Ry(0) ├┤ Rz(0) ├┤ U(-π/2,0,0) ├
+      └───────┘└───────┘└─────────────┘
+Optimized to loss metric = 0.015511341392993927
+Queried loss func 687 times
+Optimized to loss metric = 0.014359749853610992
+Queried loss func 1028 times
+Optimized to loss metric = 0.01145879551768303
+Queried loss func 693 times
+Optimized to loss metric = 0.012580465525388718
+Queried loss func 1231 times
+Optimized to loss metric = 3.6496692712266465e-13
+Queried loss func 1659 times
+Optimized to loss metric = 0.014374872669577599
+Queried loss func 1023 times
+Optimized to loss metric = 0.01287795789539814
+Queried loss func 828 times
+Optimized to loss metric = 0.008912664838135242
+Queried loss func 848 times
+Optimized to loss metric = 0.030682887881994247
+Queried loss func 701 times
+Optimized to loss metric = 0.01974913477897644
+Queried loss func 1078 times
+[d=0] Median loss: 0.015511341392993927, stdev: 0.0
+[d=0] Mean # queries: 687.0, stdev: 0.0
+Calculations complete!

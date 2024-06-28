@@ -1,9 +1,10 @@
 import numpy as np
 
-Z2 = np.load("gs_Z2.npy")
-Z3 = np.load("gs_Z3.npy")
-DO = np.load("gs_DO.npy")
-HE = np.load("gs_HE.npy")
+ROOT = "data/Rydberg_phases/"
+Z2 = np.load(f"{ROOT}/gs_Z2.npy")
+Z3 = np.load(f"{ROOT}/gs_Z3.npy")
+DO = np.load(f"{ROOT}/gs_DO.npy")
+HE = np.load(f"{ROOT}/gs_HE.npy")
 
 PHASES = {
     'Z2': Z2,

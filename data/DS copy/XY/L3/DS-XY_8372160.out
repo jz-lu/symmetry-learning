@@ -1,0 +1,42 @@
+Starting calculations...
+Running on the CPU
+Ground state norm: 0.99999994
+Querying on d = 3
+[d=3] Variational circuit:
+      ┌───────┐┌───────┐     ┌───────┐┌───────┐              ┌───────┐┌───────┐»
+q2_0: ┤ Ry(0) ├┤ Rz(0) ├──■──┤ Ry(0) ├┤ Rz(0) ├───────────■──┤ Ry(0) ├┤ Rz(0) ├»
+      ├───────┤├───────┤┌─┴─┐└───────┘├───────┤┌───────┐┌─┴─┐└───────┘├───────┤»
+q2_1: ┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├»
+      ├───────┤├───────┤└───┘  ┌─┴─┐  ├───────┤├───────┤└───┘  ┌─┴─┐  ├───────┤»
+q2_2: ┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──┤ Ry(0) ├┤ Rz(0) ├───────┤ X ├──┤ Ry(0) ├»
+      └───────┘└───────┘       └───┘  └───────┘└───────┘       └───┘  └───────┘»
+«                    ┌───────┐┌───────┐┌─────────────┐               
+«q2_0: ───────────■──┤ Ry(0) ├┤ Rz(0) ├┤ U(-π/2,0,0) ├───────────────
+«      ┌───────┐┌─┴─┐└───────┘├───────┤└──┬───────┬──┘┌─────────────┐
+«q2_1: ┤ Rz(0) ├┤ X ├────■────┤ Ry(0) ├───┤ Rz(0) ├───┤ U(-π/2,0,0) ├
+«      ├───────┤└───┘  ┌─┴─┐  ├───────┤   ├───────┤   ├─────────────┤
+«q2_2: ┤ Rz(0) ├───────┤ X ├──┤ Ry(0) ├───┤ Rz(0) ├───┤ U(-π/2,0,0) ├
+«      └───────┘       └───┘  └───────┘   └───────┘   └─────────────┘
+Optimized to loss metric = 1.3637462270565948e-09
+Queried loss func 11849 times
+Optimized to loss metric = 8.924442226998508e-06
+Queried loss func 12526 times
+Optimized to loss metric = 3.4394384042235604e-12
+Queried loss func 20735 times
+Optimized to loss metric = 1.1480148395229175e-14
+Queried loss func 20403 times
+Optimized to loss metric = 1.0365700539669703e-13
+Queried loss func 32502 times
+Optimized to loss metric = 2.0451769753649165e-14
+Queried loss func 31014 times
+Optimized to loss metric = 9.901579339430255e-14
+Queried loss func 20193 times
+Optimized to loss metric = 5.410120051604905e-14
+Queried loss func 25872 times
+Optimized to loss metric = 8.94793811312411e-06
+Queried loss func 18949 times
+Optimized to loss metric = 8.948483809945174e-06
+Queried loss func 6974 times
+[d=3] Median loss: 1.1480148395229175e-14, stdev: 0.0
+[d=3] Mean # queries: 20403.0, stdev: 0.0
+Calculations complete!

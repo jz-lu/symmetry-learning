@@ -1,6 +1,6 @@
 """
-Analyze the loss-functional query complexity over number of
-qubits for the L-GHZ state, L-XY states.
+Analyze the loss-functional query complexity over 
+ansatz circuit depth for the L-GHZ state, L-XY states.
 """
 from __helpers import prepare_basis
 from ___constants import PARAM_PER_QUBIT_PER_DEPTH

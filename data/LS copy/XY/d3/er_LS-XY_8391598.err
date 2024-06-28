@@ -1,0 +1,12 @@
+
+Currently Loaded Modules:
+  1) Anaconda3/5.0.1-fasrc02   6) pcre2/10.31-fasrc01
+  2) python/3.6.3-fasrc02      7) mpfr/3.1.5-fasrc01
+  3) intel/17.0.4-fasrc01      8) intel-mkl/2017.2.174-fasrc01
+  4) impi/2017.2.174-fasrc01   9) julia/1.3.1-fasrc01
+  5) gmp/6.1.2-fasrc01
+
+ 
+
+/var/slurmd/spool/slurmd/job8391598/slurm_script: line 15: 124151 Killed                  python3 $APP_DIR/LScaling.py -d 3 -n 10 -x XY ${SLURM_ARRAY_TASK_ID}
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=8391598.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.

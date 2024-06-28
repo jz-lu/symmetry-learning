@@ -1,12 +1,8 @@
 #* Uncomment these two lines if running directly on local MacOS. It has some weird OS problem that this line magically fixes.
-"""
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-"""
 
 from math import pi
-from __class_PQC import PQC
-from __class_HQNet import HQNet
 import numpy as np
 import torch as t
 from qiskit.quantum_info import Statevector

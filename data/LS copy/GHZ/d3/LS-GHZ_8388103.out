@@ -1,0 +1,5 @@
+Starting calculations...
+Querying on L = 7
+[L=7] Median loss: 1.7089338299504375e-13, stdev: 0.3813026181442535
+[L=7] Mean # queries: 194375.2, stdev: 101455.96108834611
+Calculations complete!
