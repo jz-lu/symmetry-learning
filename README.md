@@ -40,6 +40,7 @@ The following scripts were used to generate data for analysis.
 9. `Ryd_generator.py`: Import ground states of the 7-qubit Rydberg Hamiltonian under different phases, disodered (`DO`), high-entropy (`HE` -- the boundary between lobes in the phase diagram which have large entanglement entropy), and the periodic ordered phases `Z2` and `Z3`. The ground states, in `data/Rydberg_phases`, were generated externally in `Julia`, using the libraries `Yao` and `bloqade`.
 10. `Rydberg.py`: Finds symmetries of the 7-qubit Rydberg chain.
 11. `XY_generator.py`: Generate ground states of a XY Hamiltonian.
+12. `PCA.py`: Generate symmetries of the 3-qubit GHZ state for PCA visualization.
 
 ## Data Analysis
 In addition to scripts for implementing the algorithm in various aspects, we also include our scripts used to analyze data, and the raw data, for the figures. The raw data is contained in the `data` folder, and the analysis of the raw data is in the `Analyzers` folder.
@@ -48,7 +49,7 @@ In addition to scripts for implementing the algorithm in various aspects, we als
 2. `DLS.ipynb`: Numerical query complexity
 3. `DS/LS.ipynb`: Similar to the above, but just as a function of depth or qubit size.
 4. `GradCirc.ipynb`: Analysis of the noise curve.
-5. `PCA.py / PCA.ipynb`: PCA (principle component analysis) visualization of GHZ state symmetries found.
+5. `PCA.ipynb`: PCA (principle component analysis) visualization of GHZ state symmetries found.
 
 *Remark*: Depending on how you run the scripts, you may need to change the paths near the beginning of the script.
 

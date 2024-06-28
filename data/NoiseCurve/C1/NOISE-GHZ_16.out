@@ -1,0 +1,44 @@
+Starting calculations...
+Optimized to loss metric = 1.7232167720794678
+Queried loss func 10000 times
+Optimized to loss metric = 1.743298053741455
+Queried loss func 10008 times
+Optimized to loss metric = 7.806445121765137
+Queried loss func 10001 times
+Optimized to loss metric = 1.7290117740631104
+Queried loss func 10005 times
+Optimized to loss metric = 3.1511898040771484
+Queried loss func 10001 times
+Optimized to loss metric = 1.7679303884506226
+Queried loss func 10005 times
+Optimized to loss metric = 1.9980425834655762
+Queried loss func 10000 times
+Optimized to loss metric = 1.783910870552063
+Queried loss func 10008 times
+Optimized to loss metric = 1.7305516004562378
+Queried loss func 10005 times
+Optimized to loss metric = 3.697896957397461
+Queried loss func 10002 times
+Optimized to loss metric = 5.0138654708862305
+Queried loss func 10001 times
+Optimized to loss metric = 8.9869384765625
+Queried loss func 10000 times
+Optimized to loss metric = 4.104791164398193
+Queried loss func 10004 times
+Optimized to loss metric = 1.7318165302276611
+Queried loss func 10006 times
+Optimized to loss metric = 1.7246078252792358
+Queried loss func 10000 times
+Optimized to loss metric = 1.7891087532043457
+Queried loss func 10007 times
+Optimized to loss metric = 1.7236430644989014
+Queried loss func 10003 times
+Optimized to loss metric = 1.93508780002594
+Queried loss func 10003 times
+Optimized to loss metric = 8.339862823486328
+Queried loss func 10006 times
+Optimized to loss metric = 1.7720515727996826
+Queried loss func 10000 times
+Average loss: 3.2126633703708647
+0.4273055469033572 with deviation 0.6695263651966006
+Calculations complete!
