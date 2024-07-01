@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: HQSLN
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Jonathan Zhang
+    family-names: Lu
+    email: lujz@mit.edu
+    affiliation: Harvard University
+    orcid: 'https://orcid.org/0000-0002-2806-8248'
+  - given-names: Rodrigo Araiza
+    family-names: Bravo
+    affiliation: Harvard University
+  - given-names: Kaiying
+    family-names: Hou
+    affiliation: Harvard University
+  - given-names: Gebremedhin
+    family-names: Dagnew
+    affiliation: Harvard University
+  - given-names: Susanne
+    family-names: Yelin
+    email: syelin@g.harvard.edu
+    affiliation: Harvard University
+  - given-names: Khadijeh
+    family-names: Najafi
+    affiliation: IBM
+identifiers:
+  - type: doi
+    value: 10.48550/arXiv.2206.11970
+    description: arXiv preprint
+repository-code: 'https://github.com/jz-lu/symmetry-learning'
